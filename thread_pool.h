@@ -16,7 +16,7 @@ typedef struct jobResults
 {
 	void *result;
 	struct jobResults *next;
-	unsigned int jobID;
+	unsigned int resultID;
 } jobResults;
 
 typedef struct threadPool
@@ -25,6 +25,7 @@ typedef struct threadPool
 	threadPoolJob *lastJob;
 	jobResults *firstResult;
 	sem_t numberOfJobs;
+	sem_t numberOfResults;
 	sem_t accessingJobs;
 	sem_t accessingResults;
 	pthread_t threads[THREAD_POOL_SIZE];
