@@ -1,4 +1,7 @@
 #include <semaphore.h>
+#include "thread_pool.h"
+
+#define TYPE_CHAR_LENGTH 8
 
 enum listTypes
 {
@@ -17,7 +20,7 @@ typedef struct baseNode
 typedef struct
 {
 	baseNode base;
-	unsigned char value[8];
+	unsigned char value[TYPE_CHAR_LENGTH];
 } charNode;
 
 typedef struct
@@ -32,6 +35,7 @@ typedef struct
 	baseNode *head;
 	baseNode *tail;
 	baseNode *lastAccess;
+	threadPool *pool;
 	sem_t accessing;
 } list;
 

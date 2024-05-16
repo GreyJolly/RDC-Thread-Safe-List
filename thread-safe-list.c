@@ -1,7 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "thread-safe-list.h"
+
+// List used to retire jobs from thread pool
+typedef struct ticketList
+{
+	int ticket;
+	struct ticketList *next;
+} ticketList;
 
 static void handleError(char *error, char perrorFlag)
 {
@@ -22,12 +30,11 @@ list *createList(char type)
 	newList->tail = NULL;
 	newList->lastAccess = NULL;
 	newList->listType = type;
+	newList->pool = createThreadPool();
 
 	int ret = sem_init(&(newList->accessing), 0, 1);
 	if (ret)
 		handleError("Couldn't create semaphore", 1);
-
-
 
 	return newList;
 }
@@ -95,11 +102,14 @@ baseNode *insert(list *l, void *value)
 	{
 	case TYPE_CHAR:
 		newNode = malloc(sizeof(charNode));
-		strcpy(((charNode *)newNode)->value, value);
+		memcpy(((charNode *)newNode)->value, value, TYPE_CHAR_LENGTH);
+
+		printf("Assegnato: %s\n", ((charNode *)newNode)->value);
 		break;
 	case TYPE_LONGDOUBLE:
 		newNode = malloc(sizeof(ldoubleNode));
 		((ldoubleNode *)newNode)->value = *(long double *)value;
+
 		break;
 	default:
 		handleError("Invalid list type", 0);
@@ -141,7 +151,7 @@ baseNode *insertAt(list *l, int index, void *value)
 	{
 	case TYPE_CHAR:
 		newNode = malloc(sizeof(charNode));
-		strcpy(((charNode *)newNode)->value, value);
+		memcpy(((charNode *)newNode)->value, value, TYPE_CHAR_LENGTH);
 		break;
 	case TYPE_LONGDOUBLE:
 		newNode = malloc(sizeof(ldoubleNode));
@@ -278,23 +288,45 @@ list *map(list *l, void *(*function)(void *))
 		handleError("insertAt: invalid List", 0);
 
 	list *newList = createList(l->listType);
-	baseNode *currentNode = l->tail;
+	baseNode *currentNode = l->head;
+	ticketList *head = NULL, *node = NULL;
 
 	switch (l->listType)
 	{
 	case TYPE_CHAR:
 		while (currentNode != NULL)
 		{
-			insert(newList, function(&((ldoubleNode *)currentNode)->value));
-			currentNode = currentNode->prev;
+			node = malloc(sizeof(ticketList));
+			node->ticket = addJob(l->pool, function, ((charNode *)currentNode)->value);
+			node->next = head;
+			head = node;
+			currentNode = currentNode->next;
+		}
+		while (head != NULL)
+		{
+			insert(newList, getResult(l->pool, head->ticket));
+			node = head;
+			head = head->next;
+			free(node);
 		}
 		break;
 	case TYPE_LONGDOUBLE:
 		while (currentNode != NULL)
 		{
-			insert(newList, function(&((charNode *)currentNode)->value));
-			currentNode = currentNode->prev;
+			node = malloc(sizeof(ticketList));
+			node->ticket = addJob(l->pool, function, (&((ldoubleNode *)currentNode)->value));
+			node->next = head;
+			head = node;
+			currentNode = currentNode->next;
 		}
+		while (head != NULL)
+		{
+			insert(newList, getResult(l->pool, head->ticket));
+			node = head;
+			head = head->next;
+			free(node);
+		}
+
 		break;
 	default:
 		handleError("Invalid list type", 0);

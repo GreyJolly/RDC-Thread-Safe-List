@@ -2,13 +2,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "thread-safe-list.h"
-#include "thread_pool.h"
 
 void *multiplyByTwo(void *number)
 {
-	// TODO: FIX HORRIBLE SOLUTION
 	long double *test = malloc(sizeof(long double));
 	*test = ((*(long double *)number) * 2);
+
+	return test;
+}
+
+void *multiplyByThreeHundred(void *number)
+{
+	long double *test = malloc(sizeof(long double));
+	*test = ((*(long double *)number) * 300);
+
+	return test;
+}
+
+void *shiftChars(void *chara)
+{
+	char *test = malloc(sizeof(char) * 8);
+
+	for (int i = 0; i < 7; i++)
+	{
+		test[i] = ((char *)chara)[i] + 1;
+	}
+	test[7] = '\0';
 
 	return test;
 }
@@ -22,6 +41,8 @@ void printList(list *list)
 		printf("{ ");
 		while (currentNode != NULL)
 		{
+			printf("%s ", ((charNode *)currentNode)->value);
+
 			currentNode = currentNode->next;
 		}
 		printf("}\n");
@@ -45,7 +66,6 @@ int main()
 
 	printf("Testing!\n");
 	long double a = 1, b = 2, c = 3, d = 4;
-	/*
 	list *testList = createList(TYPE_LONGDOUBLE);
 	insert(testList, &(a));
 	insert(testList, &(b));
@@ -64,62 +84,25 @@ int main()
 
 	printList(testList);
 
-	printList(map(testList, multiplyByTwo));
+	printList(map(testList, multiplyByThreeHundred));
 
 	deleteList(testList);
 
-	*/
+	list *secondTestList = createList(TYPE_CHAR);
+	char *sa = "abcdefg",
+		 *sb = "bbcdefg",
+		 *sc = "cbcdefg",
+		 *sd = "dbcdefg";
+	insert(secondTestList, sa);
+	insert(secondTestList, sb);
+	insert(secondTestList, sc);
+	insert(secondTestList, sd);
+	insert(secondTestList, sa);
+	insert(secondTestList, sb);
 
-	threadPool *t = createThreadPool();
+	printList(secondTestList);
 
-	printf("Funzione dalla suite = %d\n", multiplyByTwo);
-	fflush(stdout);
+	printList(map(secondTestList, shiftChars));
 
-	long double *testona0 = malloc(sizeof(long double));
-	long double *testona1 = malloc(sizeof(long double));
-	long double *testona2 = malloc(sizeof(long double));
-	long double *testona3 = malloc(sizeof(long double));
-	long double *testona4 = malloc(sizeof(long double));
-	long double *testona5 = malloc(sizeof(long double));
-	long double *testona6 = malloc(sizeof(long double));
-	long double *testona7 = malloc(sizeof(long double));
-	long double *testona8 = malloc(sizeof(long double));
-	long double *testona9 = malloc(sizeof(long double));
-
-	*testona0 = 0;
-	*testona1 = 1;
-	*testona2 = 2;
-	*testona3 = 3;
-	*testona4 = 4;
-	*testona5 = 5;
-	*testona6 = 6;
-	*testona7 = 7;
-	*testona8 = 8;
-	*testona9 = 9;
-
-	addJob(t, multiplyByTwo, testona0);
-	addJob(t, multiplyByTwo, testona1);
-	addJob(t, multiplyByTwo, testona2);
-	addJob(t, multiplyByTwo, testona3);
-	addJob(t, multiplyByTwo, testona4);
-	addJob(t, multiplyByTwo, testona5);
-	addJob(t, multiplyByTwo, testona6);
-	addJob(t, multiplyByTwo, testona7);
-	addJob(t, multiplyByTwo, testona8);
-	addJob(t, multiplyByTwo, testona9);
-	addJob(t, multiplyByTwo, testona1);
-
-	sleep(2);
-
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
-	printf("RISULTATO AHHHHHHHH = %Lf\n", *((long double *)getFirstResult(t)));
+	deleteList(secondTestList);
 }

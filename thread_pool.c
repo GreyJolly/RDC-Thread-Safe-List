@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h> // TODO: REMOVE
 #include "thread_pool.h"
-
-// TODO:  L'ID CHE ASSEGNAMO AD OGNI RISPOSTA è SEMPRE 0 PERCHè RISPONDIAMO AL PROCESSO CON L'ID PIè BASSO. GESTIRE DIVERSAMENTE LE PRIORITà-
 
 void printJob(threadPoolJob *job)
 {
@@ -62,11 +59,9 @@ static void handleError(char *error)
 
 void *threadFunction(void *arg)
 {
-	printf("Thread started...\n");
 	threadPool *pool = (threadPool *)arg;
 	while (1)
 	{
-		sleep(2); // TODO: REMOVE
 		// Wait for an available job
 		int ret = sem_wait(&(pool->numberOfJobs));
 		if (ret)
@@ -89,13 +84,8 @@ void *threadFunction(void *arg)
 
 			pool->firstJob = pool->firstJob->next;
 
-			for (threadPoolJob *i = pool->firstJob; i != NULL; i = i->next)
-			{
-				i->jobID--;
-			}
-
-			printf("RIMOSSO LAVORO ");
-			printJobQueue(pool->firstJob);
+			// printf("RIMOSSO LAVORO ");
+			// printJobQueue(pool->firstJob);
 
 			ret = sem_post(&(pool->accessingJobs));
 			if (ret)
@@ -115,12 +105,8 @@ void *threadFunction(void *arg)
 			result->next = pool->firstResult;
 			pool->firstResult = result;
 
-			printf("AGGIUNTO RISULTATO ");
-			printResultQueue(pool->firstResult);
-
-			ret = sem_post(&(pool->numberOfResults));
-			if (ret)
-				handleError("sem_wait");
+			//printf("AGGIUNTO RISULTATO ");
+			//printResultQueue(pool->firstResult);
 
 			ret = sem_post(&(pool->accessingResults));
 			if (ret)
@@ -143,13 +129,12 @@ threadPool *createThreadPool()
 	pool->firstJob = NULL;
 	pool->lastJob = NULL;
 	pool->firstResult = NULL;
+	pool->lastGeneratedJob = 0;
 
 	int ret = sem_init(&(pool->numberOfJobs), 0, 0);
 	if (ret)
 		handleError("sem_init");
-	ret = sem_init(&(pool->numberOfResults), 0, 0);
-	if (ret)
-		handleError("sem_init");
+
 	ret = sem_init(&(pool->accessingJobs), 0, 1);
 	if (ret)
 		handleError("sem_init");
@@ -170,13 +155,15 @@ void deleteThreadPool()
 	// TODO: implement
 }
 
-void addJob(threadPool *pool, void *(*function)(void *), void *args)
+int addJob(threadPool *pool, void *(*function)(void *), void *args)
 {
 	threadPoolJob *newJob = malloc(sizeof(threadPoolJob));
 
 	newJob->arg = args;
 	newJob->function = function;
 	newJob->next = NULL;
+	newJob->jobID = pool->lastGeneratedJob;
+	pool->lastGeneratedJob++;
 
 	int ret = sem_wait(&(pool->accessingJobs));
 	if (ret)
@@ -185,19 +172,18 @@ void addJob(threadPool *pool, void *(*function)(void *), void *args)
 	if (pool->lastJob == NULL)
 	{
 		// Handle case where there are no Jobs
-		newJob->jobID = 0;
 		pool->firstJob = newJob;
 	}
 	else
 	{
-		newJob->jobID = pool->lastJob->jobID + 1;
 		pool->lastJob->next = newJob;
 	}
 
+	int newID = newJob->jobID;
 	pool->lastJob = newJob;
 
-	printf("AGGIUNTO LAVORO ");
-	printJobQueue(pool->firstJob);
+	// printf("AGGIUNTO LAVORO ");
+	// printJobQueue(pool->firstJob);
 
 	ret = sem_post(&(pool->numberOfJobs));
 	if (ret)
@@ -206,56 +192,58 @@ void addJob(threadPool *pool, void *(*function)(void *), void *args)
 	ret = sem_post(&(pool->accessingJobs));
 	if (ret)
 		handleError("sem_wait");
+
+	return newID;
 }
 
-void *getFirstResult(threadPool *pool)
+void *getResult(threadPool *pool, int resultID)
 {
-	void *result;
+	void *result = NULL;
 
-	int ret = sem_wait(&(pool->numberOfResults));
-	if (ret)
-		handleError("sem_wait");
-
-	ret = sem_wait(&(pool->accessingResults));
-	if (ret)
-		handleError("sem_wait");
-
-	jobResults *jobResult = pool->firstResult;
-
-	if (jobResult->next == NULL)
+	while (result == NULL)
 	{
-		// Handle case where there is only one element
-		pool->firstResult = NULL;
-		result = jobResult->result;
-		free(jobResult);
-	}
-	while (jobResult->next != NULL)
-	{
-		printf("resultID: %d nextResultID: %d\n", jobResult->resultID, jobResult->next->resultID);
-		fflush(stdout);
-		if (jobResult->next->resultID == 0)
+	
+		int ret = sem_wait(&(pool->accessingResults));
+		if (ret)
+			handleError("sem_wait");
+
+		jobResults *jobResult = pool->firstResult;
+
+		if (jobResult != NULL)
 		{
-			jobResults *firstResult = jobResult->next;
-			result = firstResult->result;
+			if (jobResult->resultID == resultID)
+			{
+				pool->firstResult = pool->firstResult->next;
+				result = jobResult->result;
+				free(jobResult);
+				//printf("RIMOSSO A RISULTATO ");
+				//printResultQueue(pool->firstResult);
+			}
 
-			jobResult->next = firstResult->next;
-			free(firstResult);
+			else
+			{
+				while (jobResult != NULL && jobResult->next != NULL)
+				{
+					if (jobResult->next->resultID == resultID)
+					{
+						jobResults *foundResult = jobResult->next;
+						result = foundResult->result;
+
+						jobResult->next = foundResult->next;
+						free(foundResult);
+
+						//printf("RIMOSSO B RISULTATO ");
+						//printResultQueue(pool->firstResult);
+					}
+
+					jobResult = jobResult->next;
+				}
+			}
 		}
 
-		// TODO: put bacj tgus oart
-		/*for (jobResults *i = pool->firstResult; i != NULL; i = i->next)
-		{
-			i->resultID--;
-		}*/
-
-		jobResult = jobResult->next;
+		ret = sem_post(&(pool->accessingResults));
+		if (ret)
+			handleError("sem_wait");
 	}
-	printf("RIMOSSO RISULTATO ");
-	printResultQueue(pool->firstResult);
-
-	ret = sem_post(&(pool->accessingResults));
-	if (ret)
-		handleError("sem_wait");
-
 	return result;
 }

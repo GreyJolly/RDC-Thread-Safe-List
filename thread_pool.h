@@ -24,13 +24,13 @@ typedef struct threadPool
 	threadPoolJob *firstJob;
 	threadPoolJob *lastJob;
 	jobResults *firstResult;
+	int lastGeneratedJob;
 	sem_t numberOfJobs;
-	sem_t numberOfResults;
 	sem_t accessingJobs;
 	sem_t accessingResults;
 	pthread_t threads[THREAD_POOL_SIZE];
 } threadPool;
 
 threadPool *createThreadPool();
-void addJob(threadPool *pool, void *(*function)(void *), void *args);
-void *getFirstResult(threadPool *pool);
+int addJob(threadPool *pool, void *(*function)(void *), void *args);
+void *getResult(threadPool *pool, int resultID);
