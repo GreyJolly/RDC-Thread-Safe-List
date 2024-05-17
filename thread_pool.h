@@ -33,5 +33,5 @@ typedef struct threadPool
 
 threadPool *createThreadPool();
 void deleteThreadPool(threadPool * pool);
-int addJob(threadPool *pool, void *(*function)(void *), void *args);
-void *getResult(threadPool *pool, int resultID);
+unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args);
+void *getResult(threadPool *pool, unsigned int resultID);

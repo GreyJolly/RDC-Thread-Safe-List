@@ -193,7 +193,7 @@ void deleteThreadPool(threadPool *pool)
 		handleError("sem_destroy");
 }
 
-int addJob(threadPool *pool, void *(*function)(void *), void *args)
+unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args)
 {
 	threadPoolJob *newJob = malloc(sizeof(threadPoolJob));
 
@@ -234,7 +234,7 @@ int addJob(threadPool *pool, void *(*function)(void *), void *args)
 	return newID;
 }
 
-void *getResult(threadPool *pool, int resultID)
+void *getResult(threadPool *pool, unsigned int resultID)
 {
 	void *result = NULL;
 

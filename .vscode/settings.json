@@ -1,6 +1,12 @@
 {
 	"files.associations": {
 		"functional": "c",
-		"stdlib.h": "c"
+		"stdlib.h": "c",
+		"ratio": "c",
+		"system_error": "c",
+		"array": "c",
+		"tuple": "c",
+		"type_traits": "c",
+		"utility": "c"
 	}
 }

@@ -23,7 +23,7 @@ static void handleError(char *error, char perrorFlag)
 	exit(EXIT_FAILURE);
 }
 
-list *createList(char type)
+list *createList(unsigned char type)
 {
 	switch (type)
 	{
@@ -73,7 +73,7 @@ void deleteList(list *l)
 	free(l);
 }
 
-baseNode *getAt(list *l, int index)
+baseNode *getAt(list *l, unsigned int index)
 {
 	if (l == NULL)
 	{
@@ -157,7 +157,7 @@ baseNode *insert(list *l, void *value)
 	return newNode;
 }
 
-baseNode *insertAt(list *l, int index, void *value)
+baseNode *insertAt(list *l, unsigned int index, void *value)
 {
 	if (l == NULL)
 	{
@@ -278,7 +278,7 @@ baseNode *removeFromList(list *l)
 
 	return l->head;
 }
-baseNode *removeFromListAt(list *l, int index)
+baseNode *removeFromListAt(list *l, unsigned int index)
 {
 	if (l == NULL)
 	{
@@ -307,6 +307,13 @@ baseNode *removeFromListAt(list *l, int index)
 
 	for (int i = 0; i < index; i++)
 	{
+		if (freeableNode->next == NULL)
+		{
+			ret = sem_post(&(l->accessing));
+			if (ret)
+				handleError("sem_post", 1);
+			return NULL;
+		}
 		freeableNode = freeableNode->next;
 	}
 
@@ -402,23 +409,27 @@ list *map(list *l, void *(*function)(void *))
 
 	return newList;
 }
-void *recursiveReduce(baseNode *head, int type, void *(*function)(void *, void *))
+
+typedef struct toBeReduced
 {
-	switch (type)
-	{
-	case TYPE_CHAR:
-		if (head->next == NULL)
-			return ((charNode *)head)->value;
-		return function(((charNode *)head)->value, recursiveReduce(head->next, type, function));
-		break;
-	case TYPE_LONGDOUBLE:
-		if (head->next == NULL)
-			return &(((ldoubleNode *)head)->value);
-		return function(&(((ldoubleNode *)head)->value), recursiveReduce(head->next, type, function));
-		break;
-	default:
-		handleError("Invalid list type", 0);
-	}
+	int solved;
+	void *value;
+	unsigned int ticket;
+	struct toBeReduced *next;
+} toBeReduced;
+
+// Structure to handle the arguments for the thread Pool
+typedef struct
+{
+	void *(*function)(void *, void *);
+	void *arg1;
+	void *arg2;
+} args;
+
+void *poolReadyFunction(void *arg)
+{
+	// The thread pool only accepts functions of type void *(*function)(void *, void *), here we're converting them
+	return ((args *)arg)->function(((args *)arg)->arg1, ((args *)arg)->arg2);
 }
 
 void *reduce(list *l, void *(*function)(void *, void *))
@@ -440,7 +451,61 @@ void *reduce(list *l, void *(*function)(void *, void *))
 			handleError("sem_post", 1);
 		return NULL;
 	}
-	void *result = recursiveReduce(l->head, l->listType, function);
+
+	baseNode *toBeAdded = l->head;									  // Node to iterate on the list
+	toBeReduced *head = malloc(sizeof(toBeReduced)), *tail, *newHead; // Nodes of the new list that handles the calls
+
+	// Setup initial head and tail (we already know l->head != NULL)
+	head->value = &(((ldoubleNode *)toBeAdded)->value);
+	head->next = NULL;
+	head->solved = 1;
+	head->ticket = 255;
+	tail = head;
+	toBeAdded = toBeAdded->next;
+
+	// Setup all other nodes
+	while (toBeAdded != NULL)
+	{
+		newHead = malloc(sizeof(toBeReduced));
+		newHead->value = &(((ldoubleNode *)toBeAdded)->value);
+		newHead->next = head;
+		newHead->solved = 1;
+		newHead->ticket = 255;
+		head = newHead;
+
+		toBeAdded = toBeAdded->next;
+	}
+
+	// Iterate on the new list
+	while (head->next != NULL)
+	{
+		toBeReduced *newNode = malloc(sizeof(toBeReduced)), *freeableNode = head;
+
+		// If the node is already solved, use the result, else get it from the pool
+		args arg = {function, (head->solved) ? head->value : getResult(l->pool, head->ticket), (head->next->solved) ? head->next->value : getResult(l->pool, head->next->ticket)};
+		newNode->ticket = addJob(l->pool, poolReadyFunction, &arg);
+		newNode->solved = 0;
+		newNode->value = NULL;
+		newNode->next = NULL;
+
+		// Update the list
+		head = freeableNode->next->next;
+
+		free(freeableNode->next);
+		free(freeableNode);
+
+		// Update the tail only if those weren't the last two elements of the list, otherwise update the head
+		if (head != NULL)
+		{
+			tail->next = newNode;
+			tail = newNode;
+		}
+		else
+		{
+			head = newNode;
+		}
+	}
+	void *result = getResult(l->pool, head->ticket);
 
 	ret = sem_post(&(l->accessing));
 	if (ret)

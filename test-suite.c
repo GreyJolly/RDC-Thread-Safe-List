@@ -5,9 +5,9 @@
 #include "thread-safe-list.h"
 
 void *sum(void *n1, void *n2)
-{
-
-	long double *test = malloc(sizeof(long double));; 
+{ // andrea ti voglio bene <3
+	long double *test = malloc(sizeof(long double));
+	;
 	*test = (*((long double *)n1) + *((long double *)n2));
 
 	return test;
@@ -17,7 +17,7 @@ void *min(void *n1, void *n2)
 {
 	long double *test = malloc(sizeof(long double));
 
-	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1): *((long double *)n2);
+	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1) : *((long double *)n2);
 	return test;
 }
 
@@ -82,7 +82,8 @@ void printList(list *list)
 int insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i<maxBound; i++){
+	for (int i = lowerBound; i < maxBound; i++)
+	{
 		finalValue = (long double)value;
 		insert(l, &(finalValue));
 		if(l == NULL && errno == EINVAL) return -1;
@@ -91,10 +92,12 @@ int insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
 	return 1;
 }
 
-int getAtLongDouble (list * l, int lowerBound, int maxBound, int minValue){
+int getAtLongDouble(list *l, int lowerBound, int maxBound, int minValue)
+{
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i<maxBound; i++){
+	for (int i = lowerBound; i < maxBound; i++)
+	{
 		finalValue = (long double)value;
 		baseNode * n = getAt(l, maxBound-1 - i);
 		if(n == NULL && errno == EINVAL) return -1;
@@ -183,7 +186,8 @@ int main()
 		//printList(l1);
 	}
 
-	for (int i = 0; i<20; i++){
+	for (int i = 0; i < 20; i++)
+	{
 		gh = (long double)i;
 		baseNode * n = getAt(l1, 19 - i);
 		//printf("VALUE: %Lf i: %Lf\n", ((ldoubleNode*)n)->value, gh);
@@ -206,7 +210,8 @@ int main()
 		removeFromList(l1);
 	}
 
-	for (int i = 0; i<10; i++){
+	for (int i = 0; i < 10; i++)
+	{
 		gh = (long double)i;
 		baseNode * n = getAt(l1, 9 - i);
 		//printf("VALUE: %Lf GH: %Lf\n", ((ldoubleNode*)n)->value, gh);
@@ -227,6 +232,9 @@ int main()
 	insert(testList, &(a));
 	insert(testList, &(b));
 	insert(testList, &(c));
+	insert(testList, &(a));
+	insert(testList, &(b));
+	insert(testList, &(c));
 
 	removeFromList(testList);
 	removeFromList(testList);
@@ -241,7 +249,7 @@ int main()
 
 	printList(testList);
 
-	printList( secondTestList = map(testList, multiplyByThreeHundred));
+	printList(secondTestList = map(testList, multiplyByThreeHundred));
 
 	deleteList(secondTestList);
 
