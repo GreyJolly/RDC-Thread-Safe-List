@@ -31,7 +31,7 @@ typedef struct
 
 typedef struct
 {
-	char listType;
+	unsigned char listType;
 	baseNode *head;
 	baseNode *tail;
 	baseNode *lastAccess;
@@ -39,12 +39,12 @@ typedef struct
 	sem_t accessing;
 } list;
 
-list *createList(char type);
+list *createList(unsigned char type);
 void deleteList(list *l);
-baseNode *getAt(list *l, int index);
+baseNode *getAt(list *l, unsigned int index);
 baseNode *insert(list *l, void *value);
-baseNode *insertAt(list *l, int index, void *value);
+baseNode *insertAt(list *l, unsigned int index, void *value);
 baseNode *removeFromList(list *l);
-baseNode *removeFromListAt(list *l, int index);
+baseNode *removeFromListAt(list *l, unsigned int index);
 list *map(list *l, void *(*function)(void *));
 void *reduce(list *l, void*(*function)(void *, void*));

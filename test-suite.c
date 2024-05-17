@@ -4,9 +4,9 @@
 #include "thread-safe-list.h"
 
 void *sum(void *n1, void *n2)
-{
-
-	long double *test = malloc(sizeof(long double));; 
+{ // andrea ti voglio bene <3
+	long double *test = malloc(sizeof(long double));
+	;
 	*test = (*((long double *)n1) + *((long double *)n2));
 
 	return test;
@@ -16,7 +16,7 @@ void *min(void *n1, void *n2)
 {
 	long double *test = malloc(sizeof(long double));
 
-	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1): *((long double *)n2);
+	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1) : *((long double *)n2);
 	return test;
 }
 
@@ -78,23 +78,28 @@ void printList(list *list)
 	}
 }
 
-void insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
+void insertLongDouble(list *l, int lowerBound, int maxBound, int minValue)
+{
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i<maxBound; i++){
+	for (int i = lowerBound; i < maxBound; i++)
+	{
 		finalValue = (long double)value;
 		insert(l, &(finalValue));
 		value++;
 	}
 }
 
-int getAtLongDouble (list * l, int lowerBound, int maxBound, int minValue){
+int getAtLongDouble(list *l, int lowerBound, int maxBound, int minValue)
+{
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i<maxBound; i++){
+	for (int i = lowerBound; i < maxBound; i++)
+	{
 		finalValue = (long double)value;
-		baseNode * n = getAt(l, maxBound-1 - i);
-		if(((ldoubleNode*)n)->value != finalValue){
+		baseNode *n = getAt(l, maxBound - 1 - i);
+		if (((ldoubleNode *)n)->value != finalValue)
+		{
 			return 0;
 		}
 		value++;
@@ -117,19 +122,22 @@ int main()
 
 	/*TEST 2: remove of the list of new values in the long double list*/
 
-	for (int i = 0; i<10; i++){
-		gh = (long double)(i+10);
+	for (int i = 0; i < 10; i++)
+	{
+		gh = (long double)(i + 10);
 		baseNode *n = insertAt(LongDoubleList, 0, &gh);
-		//printf("VALUE: %Lf GH: %d\n", ((ldoubleNode*)n)->value, i);
-		//printList(LongDoubleList);
+		// printf("VALUE: %Lf GH: %d\n", ((ldoubleNode*)n)->value, i);
+		// printList(LongDoubleList);
 	}
 
-	for (int i = 0; i<20; i++){
+	for (int i = 0; i < 20; i++)
+	{
 		gh = (long double)i;
-		baseNode * n = getAt(LongDoubleList, 19 - i);
-		//printf("VALUE: %Lf i: %Lf\n", ((ldoubleNode*)n)->value, gh);
-		if(((ldoubleNode*)n)->value != gh){
-			Test2=0;
+		baseNode *n = getAt(LongDoubleList, 19 - i);
+		// printf("VALUE: %Lf i: %Lf\n", ((ldoubleNode*)n)->value, gh);
+		if (((ldoubleNode *)n)->value != gh)
+		{
+			Test2 = 0;
 			break;
 		}
 	}
@@ -137,29 +145,35 @@ int main()
 	printf("Test 2: %d/1\n", Test2);
 
 	/* TEST 3: removeFromList*/
-	for (int i = 10; i<20; i++){
+	for (int i = 10; i < 20; i++)
+	{
 		gh = (long double)i;
 		insert(LongDoubleList, &(gh));
 	}
 
-	for (int i = 0; i<10; i++){
+	for (int i = 0; i < 10; i++)
+	{
 		removeFromList(LongDoubleList);
 	}
 
-	for (int i = 0; i<10; i++){
+	for (int i = 0; i < 10; i++)
+	{
 		gh = (long double)i;
-		baseNode * n = getAt(LongDoubleList, 9 - i);
-		//printf("VALUE: %Lf GH: %Lf\n", ((ldoubleNode*)n)->value, gh);
-		if(((ldoubleNode*)n)->value != gh){
-			Test3=0;
+		baseNode *n = getAt(LongDoubleList, 9 - i);
+		// printf("VALUE: %Lf GH: %Lf\n", ((ldoubleNode*)n)->value, gh);
+		if (((ldoubleNode *)n)->value != gh)
+		{
+			Test3 = 0;
 			break;
 		}
 	}
 
-
 	printf("Testing!\n");
 	long double a = 1, b = 2, c = 3, d = 4;
 	list *testList = createList(TYPE_LONGDOUBLE), *secondTestList;
+	insert(testList, &(a));
+	insert(testList, &(b));
+	insert(testList, &(c));
 	insert(testList, &(a));
 	insert(testList, &(b));
 	insert(testList, &(c));
@@ -177,7 +191,7 @@ int main()
 
 	printList(testList);
 
-	printList( secondTestList = map(testList, multiplyByThreeHundred));
+	printList(secondTestList = map(testList, multiplyByThreeHundred));
 
 	deleteList(secondTestList);
 
@@ -205,5 +219,5 @@ int main()
 
 	deleteList(secondTestList);
 
-	printf ("Total pass test: %d/3\n", Test1+Test2+Test3);
+	printf("Total passed test: %d/3\n", Test1 + Test2 + Test3);
 }
