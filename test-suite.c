@@ -249,7 +249,7 @@ int main()
 
 	printList(testList);
 
-	printList(secondTestList = map(testList, multiplyByThreeHundred));
+	//printList(secondTestList = map(testList, multiplyByThreeHundred));
 
 	deleteList(secondTestList);
 
