@@ -150,7 +150,7 @@ threadPool *createThreadPool()
 	return pool;
 }
 
-void deleteThreadPool()
+void deleteThreadPool(threadPool * pool)
 {
 	// TODO: implement
 }

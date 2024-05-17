@@ -3,6 +3,23 @@
 #include <unistd.h>
 #include "thread-safe-list.h"
 
+void *sum(void *n1, void *n2)
+{
+
+	long double *test = malloc(sizeof(long double));; 
+	*test = (*((long double *)n1) + *((long double *)n2));
+
+	return test;
+}
+
+void *min(void *n1, void *n2)
+{
+	long double *test = malloc(sizeof(long double));
+
+	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1): *((long double *)n2);
+	return test;
+}
+
 void *multiplyByTwo(void *number)
 {
 	long double *test = malloc(sizeof(long double));
@@ -86,6 +103,8 @@ int main()
 
 	printList(map(testList, multiplyByThreeHundred));
 
+	printf("Reduced : %Lf\n", *((long double *)reduce(testList, sum)));
+	printf("Reduced : %Lf\n", *((long double *)reduce(testList, min)));
 	deleteList(testList);
 
 	list *secondTestList = createList(TYPE_CHAR);
