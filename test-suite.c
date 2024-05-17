@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include "thread-safe-list.h"
 
 void *sum(void *n1, void *n2)
@@ -78,14 +79,16 @@ void printList(list *list)
 	}
 }
 
-void insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
+int insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
 	long double finalValue = 0;
 	int value = minValue;
 	for (int i = lowerBound; i<maxBound; i++){
 		finalValue = (long double)value;
 		insert(l, &(finalValue));
+		if(l == NULL && errno == EINVAL) return -1;
 		value++;
 	}
+	return 1;
 }
 
 int getAtLongDouble (list * l, int lowerBound, int maxBound, int minValue){
@@ -94,9 +97,11 @@ int getAtLongDouble (list * l, int lowerBound, int maxBound, int minValue){
 	for (int i = lowerBound; i<maxBound; i++){
 		finalValue = (long double)value;
 		baseNode * n = getAt(l, maxBound-1 - i);
+		if(n == NULL && errno == EINVAL) return -1;
 		if(((ldoubleNode*)n)->value != finalValue){
 			return 0;
 		}
+		
 		value++;
 	}
 	return 1;
@@ -104,57 +109,116 @@ int getAtLongDouble (list * l, int lowerBound, int maxBound, int minValue){
 
 int main()
 {
-	int Test1 = 1, Test2 = 1, Test3 = 1;
+	int Test[50];
+	for (int i = 0; i<50; i++){
+		Test[i]= 1;
+	}
+	int index = 0;
+	
 	long double gh = 0;
 
-	/*Test 1: creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
-	list *LongDoubleList = createList(TYPE_LONGDOUBLE);
+	/*Test 1: creation of a List with invalid type*/
+	list * l1 = createList(10);
+	if(errno != EINVAL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	insertLongDouble(LongDoubleList, 0, 10, 0);
-	Test1 = getAtLongDouble(LongDoubleList, 0, 10, 0);
+	/*Test 2: ivalid remove from list*/
+	baseNode * n = removeFromList(l1);
+	if(errno != EINVAL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	printf("Test 1: %d/1\n", Test1);
 
-	/*TEST 2: remove of the list of new values in the long double list*/
+	/*Test 3: creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
+	l1 = createList(TYPE_LONGDOUBLE);
+	Test[index]= insertLongDouble(l1, 0, 10, 0);
+	if(Test[index] == -1) printf("Ciao Test %d: %d/1\n", ++index, Test[index]);
+	else{
+		Test[index] = getAtLongDouble(l1, 0, 10, 0);
+		printf("Test %d: %d/1\n", ++index, Test[index]);
+	}
+	printList(l1);
+
+	/*Test 4: error GetAt in a list*/
+	n = getAt(l1, 10000);
+	if(errno != EINVAL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+
+
+	/*Test 5: Error in the insert At*/
+	gh = (long double)1;
+	n = insertAt(l1, 10000, &gh);
+	if(errno != EINVAL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+
+	/*Test 6: insertAt of element*/
+	gh = (long double)10;
+	n = insertAt(l1, 0, &gh);
+	Test[index] = getAtLongDouble(l1, 0, 11, 0);
+	if(Test[index]==-1)Test[index]=0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printList(l1);
+
+	/*Test 7: removeAt of element*/
+	n = removeFromListAt(l1, 0);
+	Test[index] = getAtLongDouble(l1, 0, 10, 0);
+	if(Test[index]==-1)Test[index]=0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printList(l1);
+
+	/*Test 8: error Remove At of an element*/
+	n = removeFromListAt(l1, 10000);
+	if(errno == EINVAL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+
+	
+
+/*
+
+	TEST 5: remove of the list of new values in the long double list
 
 	for (int i = 0; i<10; i++){
 		gh = (long double)(i+10);
-		baseNode *n = insertAt(LongDoubleList, 0, &gh);
+		baseNode *n = insertAt(l1, 0, &gh);
 		//printf("VALUE: %Lf GH: %d\n", ((ldoubleNode*)n)->value, i);
-		//printList(LongDoubleList);
+		//printList(l1);
 	}
 
 	for (int i = 0; i<20; i++){
 		gh = (long double)i;
-		baseNode * n = getAt(LongDoubleList, 19 - i);
+		baseNode * n = getAt(l1, 19 - i);
 		//printf("VALUE: %Lf i: %Lf\n", ((ldoubleNode*)n)->value, gh);
 		if(((ldoubleNode*)n)->value != gh){
-			Test2=0;
+			Test[index]=0;
 			break;
 		}
 	}
 
-	printf("Test 2: %d/1\n", Test2);
+	printf("Test %d: %d/1\n", index, Test[index]);
+	index++;
 
-	/* TEST 3: removeFromList*/
+	TEST 6: removeFromList
 	for (int i = 10; i<20; i++){
 		gh = (long double)i;
-		insert(LongDoubleList, &(gh));
+		insert(l1, &(gh));
 	}
 
 	for (int i = 0; i<10; i++){
-		removeFromList(LongDoubleList);
+		removeFromList(l1);
 	}
 
 	for (int i = 0; i<10; i++){
 		gh = (long double)i;
-		baseNode * n = getAt(LongDoubleList, 9 - i);
+		baseNode * n = getAt(l1, 9 - i);
 		//printf("VALUE: %Lf GH: %Lf\n", ((ldoubleNode*)n)->value, gh);
 		if(((ldoubleNode*)n)->value != gh){
-			Test3=0;
+			Test[index]=0;
 			break;
 		}
 	}
+
+	printf("Test %d: %d/1\n",index, Test[index]);
+	index++;
+
 
 
 	printf("Testing!\n");
@@ -204,6 +268,11 @@ int main()
 	deleteList(testList);
 
 	deleteList(secondTestList);
+*/
+	int result = 0;
+	for (int i = 0; i<50; i++){
+		result += Test[i];
+	}
 
-	printf ("Total pass test: %d/3\n", Test1+Test2+Test3);
+	printf ("Total pass test: %d/50\n", result);
 }
