@@ -52,11 +52,9 @@ void deleteList(list *l)
 		currentNode = currentNode->next;
 		free(freeableNode);
 	}
-	free(l);
 
-	ret = sem_post(&(l->accessing));
-	if (ret)
-		handleError("sem_post", 1);
+	deleteThreadPool(l->pool);
+	free(l);
 }
 
 baseNode *getAt(list *l, int index)
@@ -73,7 +71,12 @@ baseNode *getAt(list *l, int index)
 	for (int i = 0; i < index; i++)
 	{
 		if (currentNode == NULL)
+		{
+			ret = sem_post(&(l->accessing));
+			if (ret)
+				handleError("sem_post", 1);
 			return NULL; // returns NULL if list is too short
+		}
 		currentNode = currentNode->next;
 	}
 
@@ -164,7 +167,13 @@ baseNode *insertAt(list *l, int index, void *value)
 	for (int i = 0; i < index; i++)
 	{
 		if (currentNode == NULL)
+		{
+			ret = sem_post(&(l->accessing));
+			if (ret)
+				handleError("sem_post", 1);
 			return NULL; // returns NULL if the list is too short
+		}
+
 		currentNode = currentNode->next;
 	}
 
@@ -204,7 +213,12 @@ baseNode *removeFromList(list *l)
 	if (l == NULL)
 		handleError("insertAt: invalid List", 0);
 	if (l->head == NULL)
+	{
+		ret = sem_post(&(l->accessing));
+		if (ret)
+			handleError("sem_post", 1);
 		return NULL;
+	}
 
 	baseNode *freeableNode = l->head;
 
@@ -243,7 +257,12 @@ baseNode *removeFromListAt(list *l, int index)
 	if (l == NULL)
 		handleError("insertAt: invalid List", 0);
 	if (l->head == NULL)
+	{
+		ret = sem_post(&(l->accessing));
+		if (ret)
+			handleError("sem_post", 1);
 		return NULL;
+	}
 
 	baseNode *freeableNode = l->head, *returnNode;
 
@@ -337,4 +356,44 @@ list *map(list *l, void *(*function)(void *))
 		handleError("sem_post", 1);
 
 	return newList;
+}
+void *recursiveReduce(baseNode *head, int type, void *(*function)(void *, void *))
+{
+	switch (type)
+	{
+	case TYPE_CHAR:
+		if (head->next == NULL)
+			return ((charNode *)head)->value;
+		return function(((charNode *)head)->value, recursiveReduce(head->next, type, function));
+		break;
+	case TYPE_LONGDOUBLE:
+		if (head->next == NULL)
+			return &(((ldoubleNode *)head)->value);
+		return function(&(((ldoubleNode *)head)->value), recursiveReduce(head->next, type, function));
+		break;
+	default:
+		handleError("Invalid list type", 0);
+	}
+}
+
+void *reduce(list *l, void *(*function)(void *, void *))
+{
+	int ret = sem_wait(&(l->accessing));
+	if (ret)
+		handleError("sem_wait", 1);
+
+	if (l->head == NULL)
+	{
+		ret = sem_post(&(l->accessing));
+		if (ret)
+			handleError("sem_post", 1);
+		return NULL;
+	}
+	void *result = recursiveReduce(l->head, l->listType, function);
+
+	ret = sem_post(&(l->accessing));
+	if (ret)
+		handleError("sem_post", 1);
+
+	return result;
 }

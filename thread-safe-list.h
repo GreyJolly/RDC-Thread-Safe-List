@@ -46,5 +46,5 @@ baseNode *insert(list *l, void *value);
 baseNode *insertAt(list *l, int index, void *value);
 baseNode *removeFromList(list *l);
 baseNode *removeFromListAt(list *l, int index);
-
 list *map(list *l, void *(*function)(void *));
+void *reduce(list *l, void*(*function)(void *, void*));
