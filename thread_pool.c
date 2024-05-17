@@ -3,7 +3,6 @@
 #include <string.h>
 #include "thread_pool.h"
 
-/*
 void printJob(threadPoolJob *job)
 {
 	if (job == NULL)
@@ -51,7 +50,6 @@ void printResultQueue(jobResults *jr)
 	}
 	printf("Finestampacoda\n");
 }
-*/
 
 static void handleError(char *error)
 {
@@ -86,8 +84,8 @@ void *threadFunction(void *arg)
 
 			pool->firstJob = pool->firstJob->next;
 
-			// printf("RIMOSSO LAVORO ");
-			// printJobQueue(pool->firstJob);
+			//printf("RIMOSSO LAVORO ");
+			//printJobQueue(pool->firstJob);
 
 			ret = sem_post(&(pool->accessingJobs));
 			if (ret)
@@ -107,8 +105,8 @@ void *threadFunction(void *arg)
 			result->next = pool->firstResult;
 			pool->firstResult = result;
 
-			// printf("AGGIUNTO RISULTATO ");
-			// printResultQueue(pool->firstResult);
+			//printf("AGGIUNTO RISULTATO ");
+			//printResultQueue(pool->firstResult);
 
 			ret = sem_post(&(pool->accessingResults));
 			if (ret)
@@ -220,8 +218,8 @@ unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args)
 	int newID = newJob->jobID;
 	pool->lastJob = newJob;
 
-	// printf("AGGIUNTO LAVORO ");
-	// printJobQueue(pool->firstJob);
+	//printf("AGGIUNTO LAVORO ");
+	//printJobQueue(pool->firstJob);
 
 	ret = sem_post(&(pool->numberOfJobs));
 	if (ret)
@@ -254,8 +252,8 @@ void *getResult(threadPool *pool, unsigned int resultID)
 				pool->firstResult = pool->firstResult->next;
 				result = jobResult->result;
 				free(jobResult);
-				// printf("RIMOSSO A RISULTATO ");
-				// printResultQueue(pool->firstResult);
+				//printf("RIMOSSO A RISULTATO ");
+				//printResultQueue(pool->firstResult);
 			}
 
 			else
@@ -270,8 +268,8 @@ void *getResult(threadPool *pool, unsigned int resultID)
 						jobResult->next = foundResult->next;
 						free(foundResult);
 
-						// printf("RIMOSSO B RISULTATO ");
-						// printResultQueue(pool->firstResult);
+						//printf("RIMOSSO B RISULTATO ");
+						//printResultQueue(pool->firstResult);
 					}
 
 					jobResult = jobResult->next;

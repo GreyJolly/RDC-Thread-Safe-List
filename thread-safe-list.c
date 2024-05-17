@@ -5,6 +5,22 @@
 #include <errno.h>
 #include "thread-safe-list.h"
 
+typedef struct toBeReduced
+{
+	int solved;
+	void *value;
+	unsigned int ticket;
+	struct toBeReduced *next;
+} toBeReduced;
+
+// Structure to handle the arguments for the thread Pool
+typedef struct
+{
+	void *(*function)(void *, void *);
+	void *arg1;
+	void *arg2;
+} args;
+
 // List used to retire jobs from thread pool
 typedef struct ticketList
 {
@@ -18,8 +34,10 @@ static void handleError(char *error, char perrorFlag)
 	if (perrorFlag)
 		perror(error);
 	else
+	{
 		printf("%s\n", error);
-	errno = EINVAL;
+		errno = EINVAL;
+	}
 	exit(EXIT_FAILURE);
 }
 
@@ -410,27 +428,23 @@ list *map(list *l, void *(*function)(void *))
 	return newList;
 }
 
-typedef struct toBeReduced
-{
-	int solved;
-	void *value;
-	unsigned int ticket;
-	struct toBeReduced *next;
-} toBeReduced;
-
-// Structure to handle the arguments for the thread Pool
-typedef struct
-{
-	void *(*function)(void *, void *);
-	void *arg1;
-	void *arg2;
-} args;
-
 void *poolReadyFunction(void *arg)
 {
 	// The thread pool only accepts functions of type void *(*function)(void *, void *), here we're converting them
 	return ((args *)arg)->function(((args *)arg)->arg1, ((args *)arg)->arg2);
 }
+
+void printErList(toBeReduced *node)
+{
+	printf("{\n");
+	while (node != NULL)
+	{
+		printf("Value = %Lf\n", *(long double *)node->value);
+		node = node->next;
+	}
+	printf("}");
+	fflush(stdout);
+};
 
 void *reduce(list *l, void *(*function)(void *, void *))
 {
@@ -456,7 +470,18 @@ void *reduce(list *l, void *(*function)(void *, void *))
 	toBeReduced *head = malloc(sizeof(toBeReduced)), *tail, *newHead; // Nodes of the new list that handles the calls
 
 	// Setup initial head and tail (we already know l->head != NULL)
-	head->value = &(((ldoubleNode *)toBeAdded)->value);
+	switch (l->listType)
+	{
+	case (TYPE_CHAR):
+		head->value = ((charNode *)toBeAdded)->value;
+		break;
+
+	case (TYPE_LONGDOUBLE):
+		head->value = &(((ldoubleNode *)toBeAdded)->value);
+		break;
+	default:
+		handleError("Invalid list type", 0);
+	}
 	head->next = NULL;
 	head->solved = 1;
 	head->ticket = 255;
@@ -483,10 +508,15 @@ void *reduce(list *l, void *(*function)(void *, void *))
 
 		// If the node is already solved, use the result, else get it from the pool
 		args arg = {function, (head->solved) ? head->value : getResult(l->pool, head->ticket), (head->next->solved) ? head->next->value : getResult(l->pool, head->next->ticket)};
+
 		newNode->ticket = addJob(l->pool, poolReadyFunction, &arg);
 		newNode->solved = 0;
 		newNode->value = NULL;
 		newNode->next = NULL;
+
+		//TODO: remove
+		newNode->solved = 1;
+		newNode->value = getResult(l->pool, newNode->ticket);
 
 		// Update the list
 		head = freeableNode->next->next;
@@ -505,7 +535,7 @@ void *reduce(list *l, void *(*function)(void *, void *))
 			head = newNode;
 		}
 	}
-	void *result = getResult(l->pool, head->ticket);
+	void *result = (head->solved) ? head->value : getResult(l->pool, head->ticket);
 
 	ret = sem_post(&(l->accessing));
 	if (ret)
