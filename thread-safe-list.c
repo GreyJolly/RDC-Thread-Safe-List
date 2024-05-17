@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include "thread-safe-list.h"
 
 // List used to retire jobs from thread pool
@@ -18,12 +19,21 @@ static void handleError(char *error, char perrorFlag)
 		perror(error);
 	else
 		printf("%s\n", error);
+	errno = EINVAL;
 	exit(EXIT_FAILURE);
 }
 
 list *createList(char type)
 {
-	// TODO: check inputs
+	switch (type)
+	{
+	case TYPE_CHAR:
+	case TYPE_LONGDOUBLE:
+		break;
+	default:
+		errno = EINVAL;
+		return NULL;
+	}
 
 	list *newList = (list *)malloc(sizeof(list));
 	newList->head = NULL;
@@ -41,6 +51,8 @@ list *createList(char type)
 
 void deleteList(list *l)
 {
+	if (l == NULL)
+		return;
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);
@@ -53,13 +65,22 @@ void deleteList(list *l)
 		free(freeableNode);
 	}
 
+	ret = sem_destroy(&(l->accessing));
+	if (ret)
+		handleError("sem_wait", 1);
+
 	deleteThreadPool(l->pool);
 	free(l);
 }
 
 baseNode *getAt(list *l, int index)
 {
-	// TODO: check inputs
+	if (l == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);
@@ -91,23 +112,23 @@ baseNode *getAt(list *l, int index)
 
 baseNode *insert(list *l, void *value)
 {
-	// TODO: check inputs
+	if (l == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	baseNode *newNode;
 
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);
 
-	if (l == NULL)
-		handleError("insert: invalid List", 0);
-
 	switch (l->listType)
 	{
 	case TYPE_CHAR:
 		newNode = malloc(sizeof(charNode));
 		memcpy(((charNode *)newNode)->value, value, TYPE_CHAR_LENGTH);
-
-		printf("Assegnato: %s\n", ((charNode *)newNode)->value);
 		break;
 	case TYPE_LONGDOUBLE:
 		newNode = malloc(sizeof(ldoubleNode));
@@ -138,6 +159,12 @@ baseNode *insert(list *l, void *value)
 
 baseNode *insertAt(list *l, int index, void *value)
 {
+	if (l == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	if (index == 0)
 		return insert(l, value);
 	baseNode *newNode, *currentNode;
@@ -206,6 +233,12 @@ baseNode *insertAt(list *l, int index, void *value)
 
 baseNode *removeFromList(list *l)
 {
+	if (l == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);
@@ -247,6 +280,12 @@ baseNode *removeFromList(list *l)
 }
 baseNode *removeFromListAt(list *l, int index)
 {
+	if (l == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	if (index == 0)
 		// Handle case where we're removing head
 		return removeFromList(l);
@@ -299,6 +338,12 @@ baseNode *removeFromListAt(list *l, int index)
 
 list *map(list *l, void *(*function)(void *))
 {
+	if (l == NULL || function == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);
@@ -378,6 +423,12 @@ void *recursiveReduce(baseNode *head, int type, void *(*function)(void *, void *
 
 void *reduce(list *l, void *(*function)(void *, void *))
 {
+	if (l == NULL || function == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	int ret = sem_wait(&(l->accessing));
 	if (ret)
 		handleError("sem_wait", 1);

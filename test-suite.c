@@ -83,7 +83,7 @@ int main()
 
 	printf("Testing!\n");
 	long double a = 1, b = 2, c = 3, d = 4;
-	list *testList = createList(TYPE_LONGDOUBLE);
+	list *testList = createList(TYPE_LONGDOUBLE), *secondTestList;
 	insert(testList, &(a));
 	insert(testList, &(b));
 	insert(testList, &(c));
@@ -101,13 +101,15 @@ int main()
 
 	printList(testList);
 
-	printList(map(testList, multiplyByThreeHundred));
+	printList( secondTestList = map(testList, multiplyByThreeHundred));
+
+	deleteList(secondTestList);
 
 	printf("Reduced : %Lf\n", *((long double *)reduce(testList, sum)));
 	printf("Reduced : %Lf\n", *((long double *)reduce(testList, min)));
 	deleteList(testList);
 
-	list *secondTestList = createList(TYPE_CHAR);
+	secondTestList = createList(TYPE_CHAR);
 	char *sa = "abcdefg",
 		 *sb = "bbcdefg",
 		 *sc = "cbcdefg",
@@ -121,7 +123,9 @@ int main()
 
 	printList(secondTestList);
 
-	printList(map(secondTestList, shiftChars));
+	printList(testList = map(secondTestList, shiftChars));
+
+	deleteList(testList);
 
 	deleteList(secondTestList);
 }
