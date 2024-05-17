@@ -170,7 +170,7 @@ int main()
 
 	/*Test 8: error Remove At of an element*/
 	n = removeFromListAt(l1, 10000);
-	if(errno == EINVAL) Test[index] = 0;
+	if(errno != EINVAL) Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
 	
