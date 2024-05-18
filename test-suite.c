@@ -3,9 +3,22 @@
 #include <unistd.h>
 #include <errno.h>
 #include "thread-safe-list.h"
+#include <pthread.h>
+
+typedef struct argThreads{
+	list *l;
+	void *value;
+	int i;
+}argThreads;
+
+enum listTypes
+{
+	INSERT_THREADS,
+	TYPE_LONGDOUBLE
+};
 
 void *sum(void *n1, void *n2)
-{ // andrea ti voglio bene <3
+{ 
 	long double *test = malloc(sizeof(long double));
 	;
 	*test = (*((long double *)n1) + *((long double *)n2));
@@ -110,6 +123,26 @@ int getAtLongDouble(list *l, int lowerBound, int maxBound, int minValue)
 	return 1;
 }
 
+int compareList(list * l1, list * l2){
+	int index = 0;
+	baseNode * n1 = getAt(l1, index);
+	baseNode* n2 = getAt(l2, index);
+	while (n1 != NULL && n2 != NULL){
+		if(n1 == NULL && errno == EINVAL) return -1;
+		if(n2 == NULL && errno == EINVAL) return -1;
+		if(((ldoubleNode*)n1)->value != ((ldoubleNode*)n2)->value) return 0;
+		index++;
+		n1 = getAt(l1, index);
+		n2 = getAt(l2, index);
+	}
+
+	return 1;
+}
+
+void threadFunction(){
+
+}
+
 int main()
 {
 	int Test[50];
@@ -173,58 +206,60 @@ int main()
 	if(errno != EINVAL) Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	
+	/* Test 9: Error in map, list inavlid*/
+	list *l2 = map(NULL , multiplyByTwo);
+	if(errno != EINVAL && l2 != NULL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-/*
+	/*Test 10: Error in map, function invalid */
+	l2 = map( l1, NULL);
+	if(errno != EINVAL && l2 != NULL) Test[index] = 0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	TEST 5: remove of the list of new values in the long double list
-
-	for (int i = 0; i<10; i++){
-		gh = (long double)(i+10);
-		baseNode *n = insertAt(l1, 0, &gh);
-		//printf("VALUE: %Lf GH: %d\n", ((ldoubleNode*)n)->value, i);
-		//printList(l1);
+	/*Test 11: map*/
+	list* DoubleList = createList(TYPE_LONGDOUBLE);
+	for(int i = 0; i<10; i++){
+		gh = (long double)(i*2);
+		baseNode * node = insert(DoubleList, &gh);
 	}
+	printList(DoubleList);
 
-	for (int i = 0; i < 20; i++)
+	l2 = map( l1, multiplyByTwo);
+	if(l2 == NULL && errno == EINVAL)Test[index]=0;
+	Test[index] = compareList(l2, DoubleList);
+	printList(l2);
+	printf("Test %d: %d/1\n", ++index, Test[index]);
+
+	/*Test 12: insert with multithreding*/
+
+	list* l3 = createList(TYPE_LONGDOUBLE);
+	pthread_t threads;
+	struct argThreads* t = malloc(sizeof(struct argThreads));
+
+	for (int i = 0; i < 10; i++)
 	{
-		gh = (long double)i;
-		baseNode * n = getAt(l1, 19 - i);
-		//printf("VALUE: %Lf i: %Lf\n", ((ldoubleNode*)n)->value, gh);
-		if(((ldoubleNode*)n)->value != gh){
-			Test[index]=0;
-			break;
-		}
-	}
-
-	printf("Test %d: %d/1\n", index, Test[index]);
-	index++;
-
-	TEST 6: removeFromList
-	for (int i = 10; i<20; i++){
-		gh = (long double)i;
-		insert(l1, &(gh));
-	}
-
-	for (int i = 0; i<10; i++){
-		removeFromList(l1);
+		long double * val = malloc(sizeof(long double));
+		*val = i;
+		t->value = val;
+		t->l = l3;
+		pthread_create(&threads, NULL, (void*)insert, (void*)t);
 	}
 
 	for (int i = 0; i < 10; i++)
 	{
-		gh = (long double)i;
-		baseNode * n = getAt(l1, 9 - i);
-		//printf("VALUE: %Lf GH: %Lf\n", ((ldoubleNode*)n)->value, gh);
-		if(((ldoubleNode*)n)->value != gh){
-			Test[index]=0;
-			break;
-		}
+		pthread_join(threads, NULL);
 	}
 
-	printf("Test %d: %d/1\n",index, Test[index]);
-	index++;
+	Test[index] = compareList(l3, l1);
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
 
+
+
+
+
+
+/*
 
 	printf("Testing!\n");
 	long double a = 1, b = 2, c = 3, d = 4;
