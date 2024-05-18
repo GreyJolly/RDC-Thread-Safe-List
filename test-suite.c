@@ -5,16 +5,22 @@
 #include "thread-safe-list.h"
 #include <pthread.h>
 
-typedef struct argThreads{
+typedef struct argThreads
+{
 	list *l;
 	void *value;
-	int i;
+	int functionID;
 }argThreads;
 
-enum listTypes
+enum ThreadsFunctions
 {
 	INSERT_THREADS,
-	TYPE_LONGDOUBLE
+	GETAT_THREADS,
+	INSERTAT_THREADS,
+	REMOVEFROMLIST_THREADS,
+	REMOVEFROMLISTAT_THREADS,
+	MAP_THREADS,
+	REDUCE_THREADS
 };
 
 void *sum(void *n1, void *n2)
@@ -139,7 +145,18 @@ int compareList(list * l1, list * l2){
 	return 1;
 }
 
-void threadFunction(){
+void threadFunction(struct argThreads* argv){
+	switch(argv->functionID){
+		case INSERT_THREADS:
+		for (int i = 0; i<10; i++){
+			
+			baseNode * n = insert (argv->l, argv->value);
+			argv->value++;
+			/*TODO: exit control*/
+			
+		}
+		break;
+	}
 
 }
 
@@ -158,7 +175,7 @@ int main()
 	if(errno != EINVAL) Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	/*Test 2: ivalid remove from list*/
+	/*Test 2: invalid remove from list*/
 	baseNode * n = removeFromList(l1);
 	if(errno != EINVAL) Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
@@ -242,7 +259,8 @@ int main()
 		*val = i;
 		t->value = val;
 		t->l = l3;
-		pthread_create(&threads, NULL, (void*)insert, (void*)t);
+		t->functionID = INSERT_THREADS;
+		pthread_create(&threads, NULL, (void*)threadFunction, (void*)t);
 	}
 
 	for (int i = 0; i < 10; i++)
