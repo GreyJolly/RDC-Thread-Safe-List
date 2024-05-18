@@ -92,27 +92,40 @@ void printList(list *list)
 	}
 }
 
-int insertLongDouble (list * l, int lowerBound, int maxBound, int minValue){
+int insertLongDouble (list * l, int lowerBound, int upperBound, int minValue){
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i < maxBound; i++)
+	for (int i = lowerBound; i < upperBound; i++)
 	{
 		finalValue = (long double)value;
-		insert(l, &(finalValue));
-		if(l == NULL && errno == EINVAL) return -1;
+		baseNode * n = insert(l, &(finalValue));
+		if(n == NULL && errno == EINVAL) return -1;
 		value++;
 	}
 	return 1;
 }
 
-int getAtLongDouble(list *l, int lowerBound, int maxBound, int minValue)
+int insertChar (list * l,  int lowerBound, int upperBound, char startingChar) {
+	char value[8] = {startingChar, startingChar+1, startingChar+2, startingChar+3, startingChar+4, startingChar+5, startingChar+6, startingChar+7};
+	for (int i = lowerBound; i<upperBound; i++)  {
+		for (int j = 0; j<8; j++) {
+			value[j] = startingChar + j;
+		}
+		baseNode * n = insert(l, value);
+		if(n == NULL && errno == EINVAL) return -1;
+		startingChar++;
+	}
+	return 1;
+}
+
+int getAtLongDouble(list *l, int lowerBound, int upperBound, int minValue)
 {
 	long double finalValue = 0;
 	int value = minValue;
-	for (int i = lowerBound; i < maxBound; i++)
+	for (int i = lowerBound; i < upperBound; i++)
 	{
 		finalValue = (long double)value;
-		baseNode * n = getAt(l, maxBound-1 - i);
+		baseNode * n = getAt(l, upperBound-1 - i);
 		if(n == NULL && errno == EINVAL) return -1;
 		if(((ldoubleNode*)n)->value != finalValue){
 			return 0;
@@ -121,6 +134,10 @@ int getAtLongDouble(list *l, int lowerBound, int maxBound, int minValue)
 		value++;
 	}
 	return 1;
+}
+
+int insertChar() {
+
 }
 
 int compareList(list * l1, list * l2){
@@ -252,12 +269,6 @@ int main()
 
 	Test[index] = compareList(l3, l1);
 	printf("Test %d: %d/1\n", ++index, Test[index]);
-
-
-
-
-
-
 
 /*
 
