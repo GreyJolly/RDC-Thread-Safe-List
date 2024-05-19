@@ -5,11 +5,14 @@
 #include "thread-safe-list.h"
 #include <pthread.h>
 
+#define NUMBER_THREAD 10
+
 typedef struct argThreads
 {
 	list *l;
 	void *value;
 	int functionID;
+	int index;
 }argThreads;
 
 enum ThreadsFunctions
@@ -142,9 +145,7 @@ int getAtLongDouble(list *l, int lowerBound, int upperBound, int minValue)
 	return 1;
 }
 
-int insertChar() {
 
-}
 
 int compareList(list * l1, list * l2){
 	int index = 0;
@@ -162,19 +163,19 @@ int compareList(list * l1, list * l2){
 	return 1;
 }
 
-void threadFunction(struct argThreads* argv){
+void testThreadFunction(struct argThreads* argv){
 	switch(argv->functionID){
 		case INSERT_THREADS:
-		for (int i = 0; i<10; i++){
-			
+			printf("Insert\n");
+			fflush(stdout);
 			baseNode * n = insert (argv->l, argv->value);
-			argv->value++;
 			/*TODO: exit control*/
-			
-		}
-		break;
-	}
+			printList(argv->l);
+			break;
+		case INSERTAT_THREADS:
 
+	}
+	
 }
 
 int main()
@@ -188,7 +189,7 @@ int main()
 	long double gh = 0;
 
 	/*Test 1: creation of a List with invalid type*/
-	list * l1 = createList(10);
+	list * l1 = createList(NUMBER_THREAD);
 	if(errno != EINVAL) Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
@@ -200,10 +201,10 @@ int main()
 
 	/*Test 3: creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
 	l1 = createList(TYPE_LONGDOUBLE);
-	Test[index]= insertLongDouble(l1, 0, 10, 0);
+	Test[index]= insertLongDouble(l1, 0, NUMBER_THREAD, 0);
 	if(Test[index] == -1) printf("Ciao Test %d: %d/1\n", ++index, Test[index]);
 	else{
-		Test[index] = getAtLongDouble(l1, 0, 10, 0);
+		Test[index] = getAtLongDouble(l1, 0, NUMBER_THREAD, 0);
 		printf("Test %d: %d/1\n", ++index, Test[index]);
 	}
 	printList(l1);
@@ -269,21 +270,27 @@ int main()
 	list* l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads;
 	struct argThreads* t = malloc(sizeof(struct argThreads));
+	
 
 	for (int i = 0; i < 10; i++)
 	{
 		long double * val = malloc(sizeof(long double));
-		*val = i;
+		*val = (long double) i;
 		t->value = val;
 		t->l = l3;
 		t->functionID = INSERT_THREADS;
-		pthread_create(&threads, NULL, (void*)threadFunction, (void*)t);
+		t->index = -1;
+		printf("VALUE: %d\n", i);
+		pthread_create(&threads, NULL, (void*)testThreadFunction, (void*)t);
 	}
+
+	
 
 	for (int i = 0; i < 10; i++)
 	{
 		pthread_join(threads, NULL);
 	}
+	printList(l3);
 
 	Test[index] = compareList(l3, l1);
 	printf("Test %d: %d/1\n", ++index, Test[index]);
