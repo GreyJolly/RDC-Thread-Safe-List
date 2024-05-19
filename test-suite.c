@@ -5,6 +5,7 @@
 #include "thread-safe-list.h"
 #include <pthread.h>
 
+#define NUMBER_OF_TESTS 50
 #define NUMBER_THREAD 10
 
 typedef struct argThreads
@@ -179,7 +180,7 @@ void testThreadFunction(struct argThreads *argv)
 	switch (argv->functionID)
 	{
 	case INSERT_THREADS:
-		//printf("Insert\n");
+		// printf("Insert\n");
 		fflush(stdout);
 		baseNode *n = insert(argv->l, argv->value);
 		/*TODO: exit control*/
@@ -193,88 +194,85 @@ void testThreadFunction(struct argThreads *argv)
 
 int main()
 {
-	int Test[50];
-	for (int i = 0; i < 50; i++)
+	printf("Started testing...\n");
+	int Test[NUMBER_OF_TESTS];
+	for (int i = 0; i < NUMBER_OF_TESTS; i++)
 	{
-		Test[i] = 1;
+		Test[i] = 0;
 	}
 	int index = 0;
 
 	long double gh = 0;
 
-	/*Test 1: creation of a List with invalid type*/
+	// Start timing tests
+	clock_t begin = clock();
+
+	/*Creation of a List with invalid type*/
 	list *l1 = createList(NUMBER_THREAD);
-	if (errno != EINVAL)
-		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	Test[index] = errno == EINVAL;
 
-	/*Test 2: invalid remove from list*/
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+
+	/*Invalid remove from list*/
 	baseNode *n = removeFromList(l1);
-	if (errno != EINVAL)
-		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	Test[index] = errno == EINVAL;
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 3: creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
+	/*Creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
 	l1 = createList(TYPE_LONGDOUBLE);
 	Test[index] = insertLongDouble(l1, 0, NUMBER_THREAD, 0);
-	if (Test[index] == -1)
-		printf("Ciao Test %d: %d/1\n", ++index, Test[index]);
-	else
-	{
+	if (Test[index] != -1)
 		Test[index] = getAtLongDouble(l1, 0, NUMBER_THREAD, 0);
-		printf("Test %d: %d/1\n", ++index, Test[index]);
-	}
+
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 	printList(l1);
 
-	/*Test 4: error GetAt in a list*/
+	/*Error GetAt in a list*/
 	n = getAt(l1, 10000);
-	if (errno != EINVAL)
-		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	Test[index] = errno == EINVAL;
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 5: Error in the insert At*/
+	/*Error in the insert At*/
 	gh = (long double)1;
 	n = insertAt(l1, 10000, &gh);
-	if (errno != EINVAL)
-		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	Test[index] = errno == EINVAL;
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 6: insertAt of element*/
+	/*insertAt of element*/
 	gh = (long double)10;
 	n = insertAt(l1, 0, &gh);
 	Test[index] = getAtLongDouble(l1, 0, 11, 0);
 	if (Test[index] == -1)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 	printList(l1);
 
-	/*Test 7: removeAt of element*/
+	/*removeAt of element*/
 	n = removeFromListAt(l1, 0);
 	Test[index] = getAtLongDouble(l1, 0, 10, 0);
 	if (Test[index] == -1)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 	printList(l1);
 
-	/*Test 8: error Remove At of an element*/
+	/*Error Remove At of an element*/
 	n = removeFromListAt(l1, 10000);
-	if (errno != EINVAL)
-		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	Test[index] = errno == EINVAL;
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/* Test 9: Error in map, list inavlid*/
+	/*Error in map, list inavlid*/
 	list *l2 = map(NULL, multiplyByTwo);
 	if (errno != EINVAL && l2 != NULL)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 10: Error in map, function invalid */
+	/*Error in map, function invalid */
 	l2 = map(l1, NULL);
 	if (errno != EINVAL && l2 != NULL)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 11: map*/
+	/*Map*/
 	list *DoubleList = createList(TYPE_LONGDOUBLE);
 	for (int i = 0; i < 10; i++)
 	{
@@ -288,9 +286,9 @@ int main()
 		Test[index] = 0;
 	Test[index] = compareList(l2, DoubleList);
 	printList(l2);
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-	/*Test 12: insert with multithreding*/
+	/*Insert with multithreding*/
 
 	list *l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads;
@@ -315,7 +313,7 @@ int main()
 	printList(l3);
 
 	Test[index] = compareList(l3, l1);
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*
 
@@ -370,11 +368,15 @@ int main()
 
 		deleteList(secondTestList);
 	*/
+
+	clock_t end = clock(); // End timer
+
 	int result = 0;
-	for (int i = 0; i < 50; i++)
+	for (int i = 0; i < NUMBER_OF_TESTS; i++)
 	{
 		result += Test[i];
 	}
 
-	printf("Total pass test: %d/50\n", result);
+	printf("Total passed tests:\t%d/%d\n", result, index);
+	printf("Time:\t%.3lfms\n", (double)(end - begin) / CLOCKS_PER_SEC * 1000);
 }
