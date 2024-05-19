@@ -333,7 +333,7 @@ int main()
 	list *l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		struct argThreads *t = malloc(sizeof(struct argThreads));
 		long double *val = malloc(sizeof(long double));
@@ -345,7 +345,7 @@ int main()
 		pthread_create(&threads, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		pthread_join(threads, NULL);
 	}
@@ -355,8 +355,8 @@ int main()
 		Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
-	/*Test 13: multithreading GetAt*/
-	for (int i = 0; i < 10; i++)
+	/*multithreading GetAt*/
+	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		struct argThreads *t = malloc(sizeof(struct argThreads));
 		long double value = 0;
@@ -367,7 +367,7 @@ int main()
 		pthread_create(&threads, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		void *retvalue = 0;
 		pthread_join(threads, &retvalue);
