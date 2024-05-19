@@ -210,6 +210,8 @@ int numElements(list *l1, list *l2)
 
 void *testThreadFunction(struct argThreads *argv)
 {
+	int *ret = malloc(sizeof(int));
+	*ret = 1;
 	switch (argv->functionID)
 	{
 	case INSERT_THREADS:
@@ -227,6 +229,7 @@ void *testThreadFunction(struct argThreads *argv)
 		}
 		break;
 	}
+	return ret;
 	free(argv);
 }
 
@@ -263,7 +266,6 @@ int main()
 		Test[index] = getAtChar(l1, 0, NUMBER_THREAD, 'a');
 
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
-	printList(l1);
 	deleteList(l1);
 
 	/*Creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
