@@ -220,17 +220,19 @@ void *testThreadFunction(struct argThreads *argv)
 		break;
 	case GETAT_THREADS:
 		n = getAt(argv->l, argv->index);
-		int *ret = malloc(sizeof(int));
 		/*TODO: error exit control*/
 		if ((long double)argv->index != ((ldoubleNode *)n)->value)
 		{
 			*ret = 0;
-			return (ret);
+			
+			free(argv);
+			return ret;
 		}
 		break;
 	}
-	return ret;
+	
 	free(argv);
+	return ret;
 }
 
 int main()
