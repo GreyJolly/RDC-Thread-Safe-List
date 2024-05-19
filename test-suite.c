@@ -15,6 +15,8 @@ typedef struct argThreads
 	void *value;
 	int functionID;
 	int index;
+	int ret;
+
 } argThreads;
 
 enum ThreadsFunctions
@@ -210,8 +212,6 @@ int numElements(list *l1, list *l2)
 
 void *testThreadFunction(struct argThreads *argv)
 {
-	int *ret = malloc(sizeof(int));
-	*ret = 1;
 	switch (argv->functionID)
 	{
 	case INSERT_THREADS:
@@ -221,18 +221,13 @@ void *testThreadFunction(struct argThreads *argv)
 	case GETAT_THREADS:
 		n = getAt(argv->l, argv->index);
 		/*TODO: error exit control*/
-		if ((long double)argv->index != ((ldoubleNode *)n)->value)
+		if ((long double)(NUMBER_THREAD-1-argv->index) != ((ldoubleNode *)n)->value)
 		{
-			*ret = 0;
-			
-			free(argv);
-			return ret;
+			argv->ret = 0;
 		}
 		break;
 	}
-	
-	free(argv);
-	return ret;
+	return NULL;
 }
 
 int main()
@@ -254,12 +249,12 @@ int main()
 	list *l1 = createList(NUMBER_THREAD);
 	Test[index] = errno == EINVAL;
 
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Invalid remove from list*/
 	baseNode *n = removeFromList(l1);
 	Test[index] = errno == EINVAL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Creation, insert and GetAt of a series of number in TYPE_CHAR*/
 	l1 = createList(TYPE_CHAR);
@@ -267,7 +262,7 @@ int main()
 	if (Test[index] != -1)
 		Test[index] = getAtChar(l1, 0, NUMBER_THREAD, 'a');
 
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 	deleteList(l1);
 
 	/*Creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
@@ -275,18 +270,18 @@ int main()
 	Test[index] = insertLongDouble(l1, 0, NUMBER_THREAD, 0);
 	if (Test[index] != -1)
 		Test[index] = getAtLongDouble(l1, 0, NUMBER_THREAD, 0);
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error GetAt in a list*/
 	n = getAt(l1, 10000);
 	Test[index] = errno == EINVAL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error in the insert At*/
 	gh = (long double)1;
 	n = insertAt(l1, 10000, &gh);
 	Test[index] = errno == EINVAL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*insertAt of element*/
 	gh = (long double)10;
@@ -294,29 +289,29 @@ int main()
 	Test[index] = getAtLongDouble(l1, 0, 11, 0);
 	if (Test[index] == -1)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*removeAt of element*/
 	n = removeFromListAt(l1, 0);
 	Test[index] = getAtLongDouble(l1, 0, 10, 0);
 	if (Test[index] == -1)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error Remove At of an element*/
 	n = removeFromListAt(l1, 10000);
 	Test[index] = errno == EINVAL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error in map, list inavlid*/
 	list *l2 = map(NULL, (void *)(void *)multiplyByTwo);
 	Test[index] = errno == EINVAL && l2 == NULL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error in map, function invalid */
 	l2 = map(l1, NULL);
 	Test[index] = errno == EINVAL && l2 == NULL;
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printf("Test %2d:\t%d/1\n", ++index, Test[index]);
 
 	/*Map*/
 	list *DoubleList = createList(TYPE_LONGDOUBLE);
@@ -330,13 +325,13 @@ int main()
 	if (l2 == NULL && errno == EINVAL)
 		Test[index] = 0;
 	Test[index] = compareList(l2, DoubleList);
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*Insert with multithreding*/
 
 	list *l3 = createList(TYPE_LONGDOUBLE);
-	pthread_t threads;
-
+	pthread_t threads[NUMBER_THREAD];
+	
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		struct argThreads *t = malloc(sizeof(struct argThreads));
@@ -346,44 +341,47 @@ int main()
 		t->l = l3;
 		t->functionID = INSERT_THREADS;
 		t->index = -1;
-		pthread_create(&threads, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads+i, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
-		pthread_join(threads, NULL);
+		pthread_join(threads[i], NULL);
 	}
 
 	Test[index] = numElements(l1, l3);
 	if (Test[index] == -1)
 		Test[index] = 0;
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+
 
 	/*multithreading GetAt*/
-	for (int i = 0; i < NUMBER_THREAD; i++)
-	{
-		struct argThreads *t = malloc(sizeof(struct argThreads));
-		long double value = 0;
-		t->value = &value;
-		t->l = l1;
-		t->functionID = GETAT_THREADS;
-		t->index = i;
-		pthread_create(&threads, NULL, (void *)testThreadFunction, (void *)t);
-	}
+	struct argThreads t[NUMBER_THREAD];
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
-		void *retvalue = 0;
-		pthread_join(threads, &retvalue);
-		int ret = *((int *)retvalue);
-		if (ret == 0)
+		long double value = 0;
+		t[i].value = &value;
+		t[i].l = l1;
+		t[i].functionID = GETAT_THREADS;
+		t[i].index = i;
+		t[i].ret = 1;
+		pthread_create(threads+i, NULL, (void *)testThreadFunction, (void *)t);
+	}
+
+	Test[index] = 1;
+
+	for (int i = 0; i < NUMBER_THREAD; i++)
+	{
+		pthread_join(threads[i], NULL);
+		if (t[i].ret == 0)
 		{
 			Test[index] = 0;
 			break;
 		}
 	}
 
-	printf("Test %d: %d/1\n", ++index, Test[index]);
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*
 
