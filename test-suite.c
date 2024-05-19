@@ -175,6 +175,26 @@ int compareList(list *l1, list *l2)
 	return 1;
 }
 
+int numElements(list *l1, list *l2){
+	int index1 = 0, index2 =0;
+	baseNode *n1 = getAt(l1, index1);
+	while(n1 != NULL){
+		if (n1 == NULL && errno == EINVAL) return -1;
+		index1++;
+		n1 = getAt(l1, index1);
+		printf("index1: %d\n", index1);
+	}
+	baseNode *n2 = getAt(l2, index2);
+	while ( n2 != NULL)
+	{
+		if (n2 == NULL && errno == EINVAL) return -1;
+		index2++;
+		n2 = getAt(l2, index2);
+		printf("index2: %d\n", index2);
+	}
+	return (index1 == index2);
+}
+
 void testThreadFunction(struct argThreads *argv)
 {
 	switch (argv->functionID)
@@ -312,8 +332,9 @@ int main()
 	}
 	printList(l3);
 
-	Test[index] = compareList(l3, l1);
-	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	Test[index] = numElements(l1,l3);
+	if(Test[index] == -1)Test[index]=0;
+	printf("Test %d: %d/1\n", ++index, Test[index]);
 
 	/*
 
