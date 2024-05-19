@@ -225,17 +225,14 @@ void *testThreadFunction(struct argThreads *argv)
 		n = getAt(argv->l, argv->index);
 		if (errno == EINVAL && n == NULL)
 		{
-			argv->ret= 0;
+			argv->ret = 0;
 		}
-		if ((long double)argv->index != ((ldoubleNode *)n)->value)
+		if ((long double)(NUMBER_THREAD-1-argv->index) != ((ldoubleNode *)n)->value)
 		{
 			argv->ret = 0;
 		}
 		break;
 	}
-
-	free(argv);
-	return ret;
 }
 
 int main()
@@ -339,7 +336,7 @@ int main()
 
 	list *l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads[NUMBER_THREAD];
-	
+
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		struct argThreads *t = malloc(sizeof(struct argThreads));
@@ -349,7 +346,7 @@ int main()
 		t->l = l3;
 		t->functionID = INSERT_THREADS;
 		t->index = -1;
-		pthread_create(threads+i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
@@ -362,7 +359,6 @@ int main()
 		Test[index] = 0;
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
-
 	/*multithreading GetAt*/
 	struct argThreads t[NUMBER_THREAD];
 
@@ -374,7 +370,7 @@ int main()
 		t[i].functionID = GETAT_THREADS;
 		t[i].index = i;
 		t[i].ret = 1;
-		pthread_create(threads+i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
 	Test[index] = 1;
