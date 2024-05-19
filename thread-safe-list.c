@@ -510,13 +510,10 @@ void *reduce(list *l, void *(*function)(void *, void *))
 		args arg = {function, (head->solved) ? head->value : getResult(l->pool, head->ticket), (head->next->solved) ? head->next->value : getResult(l->pool, head->next->ticket)};
 
 		newNode->ticket = addJob(l->pool, poolReadyFunction, &arg);
-		newNode->solved = 0;
-		newNode->value = NULL;
-		newNode->next = NULL;
-
-		//TODO: remove
 		newNode->solved = 1;
 		newNode->value = getResult(l->pool, newNode->ticket);
+
+		newNode->next = NULL;
 
 		// Update the list
 		head = freeableNode->next->next;

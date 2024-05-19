@@ -216,18 +216,26 @@ void *testThreadFunction(struct argThreads *argv)
 	{
 	case INSERT_THREADS:
 		baseNode *n = insert(argv->l, argv->value);
-		/*TODO: error exit control*/
+		if (errno == EINVAL && n == NULL)
+		{
+			argv->ret = 0;
+		}
 		break;
 	case GETAT_THREADS:
 		n = getAt(argv->l, argv->index);
-		/*TODO: error exit control*/
-		if ((long double)(NUMBER_THREAD-1-argv->index) != ((ldoubleNode *)n)->value)
+		if (errno == EINVAL && n == NULL)
+		{
+			argv->ret= 0;
+		}
+		if ((long double)argv->index != ((ldoubleNode *)n)->value)
 		{
 			argv->ret = 0;
 		}
 		break;
 	}
-	return NULL;
+
+	free(argv);
+	return ret;
 }
 
 int main()
