@@ -3,54 +3,6 @@
 #include <string.h>
 #include "thread_pool.h"
 
-void printJob(threadPoolJob *job)
-{
-	if (job == NULL)
-	{
-		printf("Job is null!");
-		fflush(stdout);
-	}
-	else
-	{
-		printf("Printing job: {function: %d  arg: %Lf, jobID: %d, next: %d}\n", job->function, *((long double *)job->arg), job->jobID, job->next);
-		fflush(stdout);
-	}
-}
-
-void printResult(jobResults *results)
-{
-	if (results == NULL)
-	{
-		printf("results is null0!\n");
-		fflush(stdout);
-	}
-	else
-	{
-		printf("Printing results: {result: %Lf, jobID: %d, next: %d}\n", *((long double *)results->result), results->resultID, results->next);
-		fflush(stdout);
-	}
-}
-
-void printJobQueue(threadPoolJob *tpj)
-{
-	printf("Stampa coda:\n");
-	for (; tpj != NULL; tpj = tpj->next)
-	{
-		printJob(tpj);
-	}
-	printf("Finestampacoda\n");
-}
-
-void printResultQueue(jobResults *jr)
-{
-	printf("Stampa coda:\n");
-	for (; jr != NULL; jr = jr->next)
-	{
-		printResult(jr);
-	}
-	printf("Finestampacoda\n");
-}
-
 static void handleError(char *error)
 {
 	perror(error);
@@ -84,9 +36,6 @@ void *threadFunction(void *arg)
 
 			pool->firstJob = pool->firstJob->next;
 
-			//printf("RIMOSSO LAVORO ");
-			//printJobQueue(pool->firstJob);
-
 			ret = sem_post(&(pool->accessingJobs));
 			if (ret)
 				handleError("sem_wait");
@@ -104,9 +53,6 @@ void *threadFunction(void *arg)
 
 			result->next = pool->firstResult;
 			pool->firstResult = result;
-
-			//printf("AGGIUNTO RISULTATO ");
-			//printResultQueue(pool->firstResult);
 
 			ret = sem_post(&(pool->accessingResults));
 			if (ret)
@@ -176,7 +122,8 @@ void deleteThreadPool(threadPool *pool)
 		free(tempResults);
 	}
 
-	for (int i = 0; i<THREAD_POOL_SIZE; i++) {
+	for (int i = 0; i < THREAD_POOL_SIZE; i++)
+	{
 		pthread_cancel(pool->threads[i]);
 	}
 
@@ -218,9 +165,6 @@ unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args)
 	int newID = newJob->jobID;
 	pool->lastJob = newJob;
 
-	//printf("AGGIUNTO LAVORO ");
-	//printJobQueue(pool->firstJob);
-
 	ret = sem_post(&(pool->numberOfJobs));
 	if (ret)
 		handleError("sem_wait");
@@ -252,8 +196,6 @@ void *getResult(threadPool *pool, unsigned int resultID)
 				pool->firstResult = pool->firstResult->next;
 				result = jobResult->result;
 				free(jobResult);
-				//printf("RIMOSSO A RISULTATO ");
-				//printResultQueue(pool->firstResult);
 			}
 
 			else
@@ -267,11 +209,7 @@ void *getResult(threadPool *pool, unsigned int resultID)
 
 						jobResult->next = foundResult->next;
 						free(foundResult);
-
-						//printf("RIMOSSO B RISULTATO ");
-						//printResultQueue(pool->firstResult);
 					}
-
 					jobResult = jobResult->next;
 				}
 			}

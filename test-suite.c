@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include "thread-safe-list.h"
 #include <pthread.h>
 
@@ -27,46 +28,37 @@ enum ThreadsFunctions
 	REDUCE_THREADS
 };
 
-void *sum(void *n1, void *n2)
+long double *sum(long double *n1, long double *n2)
 {
 	long double *test = malloc(sizeof(long double));
-	;
-	*test = (*((long double *)n1) + *((long double *)n2));
+	*test = *n1 + *n2;
 
 	return test;
 }
 
-void *min(void *n1, void *n2)
+long double *min(long double *n1, long double *n2)
 {
 	long double *test = malloc(sizeof(long double));
 
-	*test = (*((long double *)n1) < *((long double *)n2)) ? *((long double *)n1) : *((long double *)n2);
+	*test = *n1 < *n2 ? *n1 : *n2;
 	return test;
 }
 
-void *multiplyByTwo(void *number)
+long double *multiplyByTwo(long double *number)
 {
 	long double *test = malloc(sizeof(long double));
-	*test = ((*(long double *)number) * 2);
-
-	return test;
-}
-
-void *multiplyByThreeHundred(void *number)
-{
-	long double *test = malloc(sizeof(long double));
-	*test = ((*(long double *)number) * 300);
+	*test = (*number) * 2;
 
 	return test;
 }
 
-void *shiftChars(void *chara)
+char *shiftChars(char *chara)
 {
 	char *test = malloc(sizeof(char) * 8);
 
 	for (int i = 0; i < 7; i++)
 	{
-		test[i] = ((char *)chara)[i] + 1;
+		test[i] = chara[i] + 1;
 	}
 	test[7] = '\0';
 
@@ -154,6 +146,25 @@ int getAtLongDouble(list *l, int lowerBound, int upperBound, int minValue)
 	return 1;
 }
 
+int getAtChar(list *l, int lowerBound, int upperBound, char startingChar)
+{
+	char value[8] = {startingChar, startingChar + 1, startingChar + 2, startingChar + 3, startingChar + 4, startingChar + 5, startingChar + 6, startingChar + 7};
+	for (int i = lowerBound; i < upperBound; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			value[j] = startingChar + j;
+		}
+		baseNode *n = getAt(l, upperBound - 1 - i);
+		if (n == NULL && errno == EINVAL)
+			return -1;
+		if (memcmp(((charNode *)n)->value, value, 8) != 0)
+			return 0;
+		startingChar++;
+	}
+	return 1;
+}
+
 int compareList(list *l1, list *l2)
 {
 	int index = 0;
@@ -175,19 +186,23 @@ int compareList(list *l1, list *l2)
 	return 1;
 }
 
-int numElements(list *l1, list *l2){
-	int index1 = 0, index2 =0;
+int numElements(list *l1, list *l2)
+{
+	int index1 = 0, index2 = 0;
 	baseNode *n1 = getAt(l1, index1);
-	while(n1 != NULL){
-		if (n1 == NULL && errno == EINVAL) return -1;
+	while (n1 != NULL)
+	{
+		if (n1 == NULL && errno == EINVAL)
+			return -1;
 		index1++;
 		n1 = getAt(l1, index1);
 		printf("index1: %d\n", index1);
 	}
 	baseNode *n2 = getAt(l2, index2);
-	while ( n2 != NULL)
+	while (n2 != NULL)
 	{
-		if (n2 == NULL && errno == EINVAL) return -1;
+		if (n2 == NULL && errno == EINVAL)
+			return -1;
 		index2++;
 		n2 = getAt(l2, index2);
 		printf("index2: %d\n", index2);
@@ -195,13 +210,11 @@ int numElements(list *l1, list *l2){
 	return (index1 == index2);
 }
 
-void testThreadFunction(struct argThreads *argv)
+void *testThreadFunction(struct argThreads *argv)
 {
 	switch (argv->functionID)
 	{
 	case INSERT_THREADS:
-		// printf("Insert\n");
-		fflush(stdout);
 		baseNode *n = insert(argv->l, argv->value);
 		/*TODO: exit control*/
 		printList(argv->l);
@@ -237,6 +250,16 @@ int main()
 	baseNode *n = removeFromList(l1);
 	Test[index] = errno == EINVAL;
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+
+	/*Creation, insert and GetAt of a series of number in TYPE_CHAR*/
+	l1 = createList(TYPE_CHAR);
+	Test[index] = insertChar(l1, 0, NUMBER_THREAD, 'a');
+	if (Test[index] != -1)
+		Test[index] = getAtChar(l1, 0, NUMBER_THREAD, 'a');
+
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
+	printList(l1);
+	deleteList(l1);
 
 	/*Creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
 	l1 = createList(TYPE_LONGDOUBLE);
@@ -281,15 +304,13 @@ int main()
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error in map, list inavlid*/
-	list *l2 = map(NULL, multiplyByTwo);
-	if (errno != EINVAL && l2 != NULL)
-		Test[index] = 0;
+	list *l2 = map(NULL, (void *)(void *)multiplyByTwo);
+	Test[index] = errno == EINVAL && l2 == NULL;
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*Error in map, function invalid */
 	l2 = map(l1, NULL);
-	if (errno != EINVAL && l2 != NULL)
-		Test[index] = 0;
+	Test[index] = errno == EINVAL && l2 == NULL;
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*Map*/
@@ -301,7 +322,7 @@ int main()
 	}
 	printList(DoubleList);
 
-	l2 = map(l1, multiplyByTwo);
+	l2 = map(l1, (void *)(void *)multiplyByTwo);
 	if (l2 == NULL && errno == EINVAL)
 		Test[index] = 0;
 	Test[index] = compareList(l2, DoubleList);
@@ -332,8 +353,9 @@ int main()
 	}
 	printList(l3);
 
-	Test[index] = numElements(l1,l3);
-	if(Test[index] == -1)Test[index]=0;
+	Test[index] = numElements(l1, l3);
+	if (Test[index] == -1)
+		Test[index] = 0;
 	printf("Test %d: %d/1\n", ++index, Test[index]);
 
 	/*
