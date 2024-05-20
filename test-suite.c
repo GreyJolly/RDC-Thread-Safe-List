@@ -8,6 +8,7 @@
 
 #define NUMBER_OF_TESTS 50
 #define NUMBER_THREAD 10
+#define NUMBER_ELEMENTS 10
 
 typedef struct argThreads
 {
@@ -25,9 +26,7 @@ enum ThreadsFunctions
 {
 	INSERT_THREADS,
 	GETAT_THREADS,
-	INSERTAT_THREADS,
 	REMOVEFROMLIST_THREADS,
-	REMOVEFROMLISTAT_THREADS,
 	MAP_THREADS,
 	REDUCE_THREADS
 };
@@ -240,9 +239,14 @@ void *testThreadFunction(struct argThreads *argv)
 		long double * r = ((long double *)reduce(argv->l, (void *)(void *)argv->function));
 		argv->ret= *(long double*)(argv->value) == *r;
 		break;
+
 	case MAP_THREADS:
 		list * res = map(argv->l, (void *)(void *)argv->function);
 		argv->ret= compareList(res, argv->compare_list);
+		break;
+
+	case REMOVEFROMLIST_THREADS:
+
 		break;
 
 	}
@@ -267,9 +271,9 @@ int main()
 
 	/*Creation, insert and GetAt of a series of number in TYPE_CHAR*/
 	list * list_char = createList(TYPE_CHAR);
-	Test[index] = insertChar(list_char, 0, NUMBER_THREAD, 'a');
+	Test[index] = insertChar(list_char, 0, NUMBER_ELEMENTS, 'a');
 	if (Test[index] != -1)
-		Test[index] = getAtChar(list_char, 0, NUMBER_THREAD, 'a');
+		Test[index] = getAtChar(list_char, 0, NUMBER_ELEMENTS, 'a');
 
 	printf("\tTest %2d:\t%d/1\t\tCreation, insert and GetAt of a series of number in TYPE_CHAR\n", ++index, Test[index]);
 	deleteList(list_char);
@@ -278,7 +282,7 @@ int main()
 	printf("\nTesting lists with long double\n");
 
 	/*Creation of a List with invalid type*/
-	list* l1 = createList(NUMBER_THREAD);
+	list* l1 = createList(NUMBER_ELEMENTS);
 	Test[index] = errno == EINVAL;
 	printf("\tTest %2d:\t%d/1\t\tCreation of a List with invalid type\n", ++index, Test[index]);
 
@@ -289,9 +293,9 @@ int main()
 
 	/*Creation, insert and GetAt of a series of number in TYPE_LONGDOUBLE*/
 	l1 = createList(TYPE_LONGDOUBLE);
-	Test[index] = insertLongDouble(l1, 0, NUMBER_THREAD, 0);
+	Test[index] = insertLongDouble(l1, 0, NUMBER_ELEMENTS, 0);
 	if (Test[index] != -1)
-		Test[index] = getAtLongDouble(l1, 0, NUMBER_THREAD, 0);
+		Test[index] = getAtLongDouble(l1, 0, NUMBER_ELEMENTS, 0);
 	printf("\tTest %2d:\t%d/1\t\tCreation, insert and GetAt of a series of number in TYPE_LONGDOUBLE\n", ++index, Test[index]);
 
 	/*Error GetAt in a list*/
@@ -303,7 +307,7 @@ int main()
 	gh = (long double)1;
 	n = insertAt(l1, 10000, &gh);
 	Test[index] = errno == EINVAL;
-	printf("\tTest %2d:\t%d/1\t\tError in the insert At\n", ++index, Test[index]);
+	printf("\tTest %2d:\t%d/1\t\tError in the insertAt\n", ++index, Test[index]);
 
 	/*insertAt of element*/
 	gh = (long double)10;
@@ -324,6 +328,30 @@ int main()
 	n = removeFromListAt(l1, 10000);
 	Test[index] = errno == EINVAL;
 	printf("\tTest %2d:\t%d/1\t\tError removeAt of an element\n", ++index, Test[index]);
+
+	/*Remove of an element*/
+	list * base_list = createList(TYPE_LONGDOUBLE);
+	Test[index] = insertLongDouble(base_list, 0, NUMBER_ELEMENTS, 0);
+	if (Test[index] != -1)
+		Test[index] = getAtLongDouble(l1, 0, NUMBER_ELEMENTS, 0);
+
+	gh =  (double long)10;
+	
+	n = insert(l1,&gh);
+	if(errno == EINVAL && n==NULL ){
+		Test[index] = 0;
+	}
+
+	n = removeFromList(l1);
+
+	if(errno == EINVAL && n ==NULL ){
+		Test[index] = 0;
+		printf("SONO QUA\n");
+	}
+	else{
+		Test[index]=compareList(base_list, l1);
+	}
+	printf("\tTest %2d:\t%d/1\t\tRemove of an element\n", ++index, Test[index]);
 
 	/*Error in map, list inavlid*/
 	list *l2 = map(NULL, (void *)(void *)multiplyByTwo);
@@ -361,7 +389,7 @@ int main()
 
 	/*reduce*/
 	long double tot = 0;
-	for(int i = 0; i<NUMBER_THREAD;i++){
+	for(int i = 0; i<NUMBER_ELEMENTS;i++){
 		baseNode* n = getAt(l1,i);
 		tot += ((ldoubleNode *)n)->value;
 	}
@@ -371,7 +399,6 @@ int main()
 
 
 	/*Insert with multithreding*/
-
 	list *l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads[NUMBER_THREAD];
 
@@ -398,6 +425,8 @@ int main()
 	if (Test[index] == -1)
 		Test[index] = 0;
 	printf("\tTest %d:\t%d/1\t\tInsert with multithreding\n", ++index, Test[index]);
+
+	/**/
 
 	/*multithreading GetAt*/
 	struct argThreads t[NUMBER_THREAD];

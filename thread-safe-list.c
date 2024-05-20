@@ -507,11 +507,14 @@ void *reduce(list *l, void *(*function)(void *, void *))
 		toBeReduced *newNode = malloc(sizeof(toBeReduced)), *freeableNode = head;
 
 		// If the node is already solved, use the result, else get it from the pool
-		args arg = {function, (head->solved) ? head->value : getResult(l->pool, head->ticket), (head->next->solved) ? head->next->value : getResult(l->pool, head->next->ticket)};
+		args *arg = malloc(sizeof(args));
+		arg->function = function;
+		arg->arg1 = (head->solved) ? head->value : getResult(l->pool, head->ticket);
+		arg->arg2 = (head->next->solved) ? head->next->value : getResult(l->pool, head->next->ticket);
 
-		newNode->ticket = addJob(l->pool, poolReadyFunction, &arg);
-		newNode->solved = 1;
-		newNode->value = getResult(l->pool, newNode->ticket);
+		newNode->ticket = addJob(l->pool, poolReadyFunction, arg);
+		newNode->solved = 0;
+		newNode->value = 0;
 
 		newNode->next = NULL;
 
