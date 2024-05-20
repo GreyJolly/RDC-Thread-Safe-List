@@ -3,8 +3,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include "thread-safe-list.h"
 #include <pthread.h>
+#include "thread-safe-list.h"
 
 #define NUMBER_OF_TESTS 50
 #define NUMBER_THREAD 10
@@ -246,12 +246,22 @@ void *testThreadFunction(struct argThreads *argv)
 
 	case REDUCE_THREADS:
 		long double *r = ((long double *)reduce(argv->l, (void *)(void *)argv->function));
-		argv->ret = *(long double *)(argv->value) == *r;
+		if (errno == EINVAL && r == NULL)
+		{
+			argv->ret = 0;
+		}
+		else
+			argv->ret = *(long double *)(argv->value) == *r;
 		break;
 
 	case MAP_THREADS:
 		list *res = map(argv->l, (void *)(void *)argv->function);
-		argv->ret = compareList(res, argv->compare_list);
+		if (errno == EINVAL && res == NULL)
+		{
+			argv->ret = 0;
+		}
+		else
+			argv->ret = compareList(res, argv->compare_list);
 		break;
 
 	case REMOVEFROMLIST_THREADS:
