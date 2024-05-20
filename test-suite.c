@@ -300,21 +300,97 @@ int main()
 	}
 	int index = 0;
 
-	long double gh = 0;
+	long double test_longDouble = 0;
+	char test_char[8];
 
 	// Start timing tests
 	clock_t begin = clock();
 
 	printf("Testing lists with char\n");
 
-	/*Creation, insert and GetAt of a series of number in TYPE_CHAR*/
+	/*TEST 1: Creation of a List with invalid type*/
+	list *l = createList(NUMBER_ELEMENTS);
+	Test[index] = errno == EINVAL;
+	printf("\tTest %2d:\t%d/1\t\tCreation of a List with invalid type\n", ++index, Test[index]);
+
+	/*TEST 2: Invalid remove from list*/
+	baseNode *n = removeFromList(l);
+	Test[index] = errno == EINVAL;
+	printf("\tTest %2d:\t%d/1\t\tInvalid remove from list\n", ++index, Test[index]);
+
+	/*TEST 3: Creation, insert and GetAt of a series of number in TYPE_CHAR*/
 	list *list_char = createList(TYPE_CHAR);
 	Test[index] = insertChar(list_char, 0, NUMBER_ELEMENTS, 'a');
 	if (Test[index] != -1)
 		Test[index] = getAtChar(list_char, 0, NUMBER_ELEMENTS, 'a');
 
 	printf("\tTest %2d:\t%d/1\t\tCreation, insert and GetAt of a series of number in TYPE_CHAR\n", ++index, Test[index]);
-	deleteList(list_char);
+
+	/*TEST 4: Error GetAt in a list*/
+	n = getAt(list_char, 10000);
+	Test[index] = errno == EINVAL;
+	printf("\tTest %2d:\t%d/1\t\tError GetAt in a list\n", ++index, Test[index]);
+
+	/*TEST 5: Error in the insert At*/
+	memcpy(test_char, "ciaone1a", TYPE_CHAR_LENGTH);
+	n = insertAt(list_char, 10000, &test_char);
+	Test[index] = errno == EINVAL;
+	printf("\tTest %2d:\t%d/1\t\tError in the insertAt\n", ++index, Test[index]);
+
+	/*TEST 6: insertAt of element*/
+	Test[index] = 1;
+	memcpy(test_char, "ciaone1a", TYPE_CHAR_LENGTH);
+	n = insertAt(list_char, 0, &test_char);
+	for(int i = 0; i<NUMBER_ELEMENTS+1; i++){
+		n = getAt(list_char, i);
+		if(n==NULL) Test[index] = 0;
+	}
+	printf("\tTest %2d:\t%d/1\t\tinsertAt of element\n", ++index, Test[index]);
+
+	/*TEST 7: removeAt of element*/
+	Test[index] = 1;
+	n = removeFromListAt(list_char, 0);
+	for(int i = 0; i<NUMBER_ELEMENTS; i++){
+		n = getAt(list_char, i);
+		if(n==NULL) Test[index] = 0;
+	}
+	printf("\tTest %2d:\t%d/1\t\tremoveAt of element\n", ++index, Test[index]);
+
+	/*TEST 8: Error Remove At of an element */
+	n = removeFromListAt(list_char, 10000);
+	Test[index] = errno == EINVAL;
+	printf("\tTest %2d:\t%d/1\t\tError removeAt of an element\n", ++index, Test[index]);
+
+	/*TEST 9: Remove of an element*/
+	Test[index] = 1;
+	n = insertAt(list_char, 0, &test_char);
+	if (errno == EINVAL && n == NULL)
+	{
+		Test[index] = 0;
+	}
+	if(Test[index]!=0){
+		n = removeFromList(list_char);
+		if (errno == EINVAL && n == NULL)
+		{
+			Test[index] = 0;
+		}
+		for(int i = 0; i<NUMBER_ELEMENTS; i++){
+			n = getAt(list_char, i);
+			if(n==NULL) Test[index] = 0;
+		}
+	}
+	printf("\tTest %2d:\t%d/1\t\tRemove of an element\n", ++index, Test[index]);
+
+	/* TEST 10: Error in map, list inavlid*/
+	list *list_char_2 = map(NULL, (void *)(void *)shiftChars);
+	Test[index] = errno == EINVAL && list_char_2 == NULL;
+	printf("\tTest %2d:\t%d/1\t\tError in map, list inavlid\n", ++index, Test[index]);
+	
+	/*TEST 11: Error in map, function invalid */
+	list_char_2 = map(list_char, NULL);
+	Test[index] = errno == EINVAL && list_char_2 == NULL;
+	printf("\tTest %2d:\t%d/1\t\tError in map, function invalid\n", ++index, Test[index]);
+
 
 	printf("\nTesting lists with long double\n");
 
@@ -324,7 +400,7 @@ int main()
 	printf("\tTest %2d:\t%d/1\t\tCreation of a List with invalid type\n", ++index, Test[index]);
 
 	/*Invalid remove from list*/
-	baseNode *n = removeFromList(l1);
+	n = removeFromList(l1);
 	Test[index] = errno == EINVAL;
 	printf("\tTest %2d:\t%d/1\t\tInvalid remove from list\n", ++index, Test[index]);
 
@@ -341,14 +417,14 @@ int main()
 	printf("\tTest %2d:\t%d/1\t\tError GetAt in a list\n", ++index, Test[index]);
 
 	/*Error in the insert At*/
-	gh = (long double)1;
-	n = insertAt(l1, 10000, &gh);
+	test_longDouble = (long double)1;
+	n = insertAt(l1, 10000, &test_longDouble);
 	Test[index] = errno == EINVAL;
 	printf("\tTest %2d:\t%d/1\t\tError in the insertAt\n", ++index, Test[index]);
 
 	/*insertAt of element*/
-	gh = (long double)10;
-	n = insertAt(l1, 0, &gh);
+	test_longDouble = (long double)10;
+	n = insertAt(l1, 0, &test_longDouble);
 	Test[index] = getAtLongDouble(l1, 0, 11, 0);
 	if (Test[index] == -1)
 		Test[index] = 0;
@@ -372,9 +448,9 @@ int main()
 	if (Test[index] != -1)
 		Test[index] = getAtLongDouble(l1, 0, NUMBER_ELEMENTS, 0);
 
-	gh = (double long)10;
+	test_longDouble = (double long)10;
 
-	n = insert(l1, &gh);
+	n = insert(l1, &test_longDouble);
 	if (errno == EINVAL && n == NULL)
 	{
 		Test[index] = 0;
@@ -407,8 +483,8 @@ int main()
 	list *DoubleList = createList(TYPE_LONGDOUBLE);
 	for (int i = 0; i < 10; i++)
 	{
-		gh = (long double)(i * 2);
-		baseNode *node = insert(DoubleList, &gh);
+		test_longDouble = (long double)(i * 2);
+		baseNode *node = insert(DoubleList, &test_longDouble);
 	}
 
 	l2 = map(l1, (void *)(void *)multiplyByTwo);
@@ -582,28 +658,6 @@ int main()
 	}
 
 	printf("\tTest %d:\t%d/1\t\tTesting reduce in multithreading\n", ++index, Test[index]);
-
-	/*
-		secondTestList = createList(TYPE_CHAR);
-		char *sa = "abcdefg",
-			 *sb = "bbcdefg",
-			 *sc = "cbcdefg",
-			 *sd = "dbcdefg";
-		insert(secondTestList, sa);
-		insert(secondTestList, sb);
-		insert(secondTestList, sc);
-		insert(secondTestList, sd);
-		insert(secondTestList, sa);
-		insert(secondTestList, sb);
-
-		printList(secondTestList);
-
-		printList(testList = map(secondTestList, shiftChars));
-
-		deleteList(testList);
-
-		deleteList(secondTestList);
-	*/
 
 	deleteList(l1);
 	deleteList(base_list);
