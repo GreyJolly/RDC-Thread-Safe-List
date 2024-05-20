@@ -460,8 +460,6 @@ int main()
 		pthread_join(threads[i], NULL);
 		free(t[i].value);
 	}
-	printList(l1);
-	printList(l3);
 
 	Test[index] = checkSameElements(l1, l3);
 
@@ -552,6 +550,8 @@ int main()
 		}
 	}
 
+	deleteList(DoubleList);
+
 	printf("\tTest %d:\t%d/1\t\tTesting map in multithreading \n", ++index, Test[index]);
 
 	/*Reduce in multithreading*/
@@ -584,38 +584,6 @@ int main()
 	printf("\tTest %d:\t%d/1\t\tTesting reduce in multithreading\n", ++index, Test[index]);
 
 	/*
-
-		printf("Testing!\n");
-		long double a = 1, b = 2, c = 3, d = 4;
-		list *testList = createList(TYPE_LONGDOUBLE), *secondTestList;
-		insert(testList, &(a));
-		insert(testList, &(b));
-		insert(testList, &(c));
-		insert(testList, &(a));
-		insert(testList, &(b));
-		insert(testList, &(c));
-
-		removeFromList(testList);
-		removeFromList(testList);
-
-		insert(testList, &(a));
-		insert(testList, &(b));
-		insert(testList, &(c));
-
-		insertAt(testList, 2, &(d));
-
-		removeFromListAt(testList, 0);
-
-		printList(testList);
-
-		//printList(secondTestList = map(testList, multiplyByThreeHundred));
-
-		deleteList(secondTestList);
-
-		printf("Reduced : %Lf\n", *((long double *)reduce(testList, sum)));
-		printf("Reduced : %Lf\n", *((long double *)reduce(testList, min)));
-		deleteList(testList);
-
 		secondTestList = createList(TYPE_CHAR);
 		char *sa = "abcdefg",
 			 *sb = "bbcdefg",
@@ -636,6 +604,10 @@ int main()
 
 		deleteList(secondTestList);
 	*/
+
+	deleteList(l1);
+	deleteList(base_list);
+	deleteList(l3);
 
 	clock_t end = clock(); // End timer
 
