@@ -247,7 +247,7 @@ void *testThreadFunction(struct argThreads *argv)
 		break;
 
 	case REMOVEFROMLIST_THREADS:
-
+		n = removeFromList(argv->l);
 		break;
 
 	}
@@ -426,10 +426,35 @@ int main()
 		Test[index] = 0;
 	printf("\tTest %d:\t%d/1\t\tInsert with multithreding\n", ++index, Test[index]);
 
-	/**/
+	/*Multithreading RemoveAt*/
+	struct argThreads t[NUMBER_THREAD];
+	Test[index] = insertLongDouble(l1, NUMBER_ELEMENTS, NUMBER_ELEMENTS+NUMBER_THREAD, NUMBER_ELEMENTS);
+
+	for (int i = 0; i < NUMBER_THREAD; i++)
+	{
+		long double value = 0;
+		t[i].value = &value;
+		t[i].l = l1;
+		t[i].functionID = REMOVEFROMLIST_THREADS;
+		t[i].index = i;
+		t[i].ret = 1;
+		t[i].function = NULL;
+		t[i].compare_list = NULL;
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+	}
+
+	for (int i = 0; i < NUMBER_THREAD; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+
+	Test[index] = numElements(l1, l3);
+	if (Test[index] == -1)
+		Test[index] = 0;
+	printf("\tTest %d:\t%d/1\t\tRemoveAt with multithreding\n", ++index, Test[index]);
 
 	/*multithreading GetAt*/
-
+	
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		long double value = 0;
