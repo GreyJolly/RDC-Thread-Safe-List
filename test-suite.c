@@ -16,6 +16,7 @@ typedef struct argThreads
 	int functionID;
 	int index;
 	int ret;
+	void* (*function)(void*, void*);
 
 } argThreads;
 
@@ -233,6 +234,11 @@ void *testThreadFunction(struct argThreads *argv)
 			argv->ret = 0;
 		}
 		break;
+
+	case REDUCE_THREADS:
+		long double * r = ((long double *)reduce(argv->l, (void *)(void *)argv->function));
+		argv->ret= *(long double*)(argv->value) == *r;
+		break;
 	}
 }
 
@@ -367,6 +373,7 @@ int main()
 		t->l = l3;
 		t->functionID = INSERT_THREADS;
 		t->index = -1;
+		t->function = NULL;
 		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
@@ -391,6 +398,7 @@ int main()
 		t[i].functionID = GETAT_THREADS;
 		t[i].index = i;
 		t[i].ret = 1;
+		t[i].function = NULL;
 		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
 	}
 
@@ -409,7 +417,32 @@ int main()
 	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*Reduce in multithreading*/
-	
+
+	for (int i = 0; i < NUMBER_THREAD; i++)
+	{
+		long double value = tot;
+		t[i].value = &value;
+		t[i].l = l1;
+		t[i].functionID = REDUCE_THREADS;
+		t[i].index = -1;
+		t[i].ret = 0;
+		t[i].function = (void*)(void *) sum;
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+	}
+
+	Test[index] = 1;
+
+	for (int i = 0; i < NUMBER_THREAD; i++)
+	{
+		pthread_join(threads[i], NULL);
+		if (t[i].ret = 0)
+		{
+			Test[index] = 0;
+			break;
+		}
+	}
+
+	printf("Test %d:\t%d/1\n", ++index, Test[index]);
 
 	/*
 
