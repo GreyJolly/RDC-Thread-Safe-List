@@ -434,18 +434,6 @@ void *poolReadyFunction(void *arg)
 	return ((args *)arg)->function(((args *)arg)->arg1, ((args *)arg)->arg2);
 }
 
-void printErList(toBeReduced *node)
-{
-	printf("{\n");
-	while (node != NULL)
-	{
-		printf("Value = %Lf\n", *(long double *)node->value);
-		node = node->next;
-	}
-	printf("}");
-	fflush(stdout);
-};
-
 void *reduce(list *l, void *(*function)(void *, void *))
 {
 	if (l == NULL || function == NULL)

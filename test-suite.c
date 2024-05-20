@@ -170,36 +170,39 @@ int getAtChar(list *l, int lowerBound, int upperBound, char startingChar)
 	return 1;
 }
 
-int compareList(list *l1, list *l2)
+// Counts the number of occurences of an element in a list
+int countOccurences(list *l, baseNode *n)
 {
-	int index1 = 0, index2 = 0;
-	baseNode *n1 = getAt(l1, index1);
-	baseNode *n2 = getAt(l2, index2);
-	while (n1 != NULL)
+	int occurences = 0;
+	baseNode *iter;
+	switch (l->listType)
 	{
-		if (n1 == NULL && errno == EINVAL)
-			return -1;
-
-		while (n2 != NULL)
+	case TYPE_CHAR:
+		for (int i = 0; 1; i++)
 		{
-			if (n2 == NULL && errno == EINVAL)
-				return -1;
-			if (n2 == NULL)
-				return 0;
-			if (((ldoubleNode *)n1)->value == ((ldoubleNode *)n2)->value)
+			iter = getAt(l, i);
+			if (iter == NULL)
 				break;
-			index2++;
-
-			n2 = getAt(l2, index2);
+			if (memcmp(((charNode *)iter)->value, ((charNode *)n)->value, 8) == 0)
+				occurences++;
 		}
-		index1++;
-		n1 = getAt(l2, index1);
+		break;
+	case TYPE_LONGDOUBLE:
+		for (int i = 0; 1; i++)
+		{
+			iter = getAt(l, i);
+			if (iter == NULL)
+				break;
+			if (((ldoubleNode *)iter)->value == ((ldoubleNode *)n)->value);
+				occurences++;
+		}
+		break;
 	}
-
-	return 1;
+	return occurences;
 }
 
-int numElements(list *l1, list *l2)
+// Checks whether two lists have the same number of elements
+int sameNumberOfElements(list *l1, list *l2)
 {
 	int index1 = 0, index2 = 0;
 	baseNode *n1 = getAt(l1, index1);
@@ -219,6 +222,23 @@ int numElements(list *l1, list *l2)
 		n2 = getAt(l2, index2);
 	}
 	return (index1 == index2);
+}
+
+// Checks whehter two lists have the same elements, regardless of order
+int checkSameElements(list *l1, list *l2)
+{
+	if (l1->listType != l2->listType || sameNumberOfElements(l1,l2) != 1)
+		return 0;
+	baseNode *n;
+	for (int i = 0; 1; i++)
+	{
+		n = getAt(l1, i);
+		if (n == NULL)
+			return 1;
+		if (countOccurences(l1, n) != countOccurences(l2, n))
+			return 0;
+	}
+	return 1;
 }
 
 void *testThreadFunction(struct argThreads *argv)
@@ -261,7 +281,7 @@ void *testThreadFunction(struct argThreads *argv)
 			argv->ret = 0;
 		}
 		else
-			argv->ret = compareList(res, argv->compare_list);
+			argv->ret = checkSameElements(res, argv->compare_list);
 		break;
 
 	case REMOVEFROMLIST_THREADS:
@@ -369,7 +389,7 @@ int main()
 	}
 	else
 	{
-		Test[index] = compareList(base_list, l1);
+		Test[index] = checkSameElements(base_list, l1);
 	}
 	printf("\tTest %2d:\t%d/1\t\tRemove of an element\n", ++index, Test[index]);
 
@@ -394,7 +414,7 @@ int main()
 	l2 = map(l1, (void *)(void *)multiplyByTwo);
 	if (l2 == NULL && errno == EINVAL)
 		Test[index] = 0;
-	Test[index] = compareList(l2, DoubleList);
+	Test[index] = checkSameElements(l2, DoubleList);
 	printf("\tTest %d:\t%d/1\t\tMap in single thread\n", ++index, Test[index]);
 
 	/*Error in reduce: list invalid*/
@@ -426,7 +446,7 @@ int main()
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
 		t[i].value = malloc(sizeof(long double));
-		*(long double*)(t[i].value) = (long double)i;
+		*(long double *)(t[i].value) = (long double)i;
 		t[i].l = l3;
 		t[i].functionID = INSERT_THREADS;
 		t[i].index = -1;
@@ -443,9 +463,9 @@ int main()
 	printList(l1);
 	printList(l3);
 
-	Test[index] = compareList(l1, l3);
+	Test[index] = checkSameElements(l1, l3);
 
-	Test[index] = numElements(l1, l3);
+	Test[index] = sameNumberOfElements(l1, l3);
 	if (Test[index] == -1)
 		Test[index] = 0;
 	printf("\tTest %d:\t%d/1\t\tInsert with multithreding\n", ++index, Test[index]);
@@ -471,7 +491,7 @@ int main()
 		pthread_join(threads[i], NULL);
 	}
 
-	Test[index] = numElements(l1, l3);
+	Test[index] = sameNumberOfElements(l1, l3);
 	if (Test[index] == -1)
 		Test[index] = 0;
 	printf("\tTest %d:\t%d/1\t\tRemoveAt with multithreding\n", ++index, Test[index]);
