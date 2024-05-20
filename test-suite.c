@@ -427,7 +427,6 @@ int main()
 	printf("\tTest %d:\t%d/1\t\tInsert with multithreding\n", ++index, Test[index]);
 
 	/*Multithreading RemoveAt*/
-	struct argThreads t[NUMBER_THREAD];
 	Test[index] = insertLongDouble(l1, NUMBER_ELEMENTS, NUMBER_ELEMENTS+NUMBER_THREAD, NUMBER_ELEMENTS);
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
@@ -440,7 +439,7 @@ int main()
 		t[i].ret = 1;
 		t[i].function = NULL;
 		t[i].compare_list = NULL;
-		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
 	}
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
