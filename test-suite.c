@@ -33,39 +33,41 @@ enum ThreadsFunctions
 
 long double *sum(long double *n1, long double *n2)
 {
-	long double *test = malloc(sizeof(long double));
-	*test = *n1 + *n2;
+	long double *returnValue = malloc(sizeof(long double));
+	*returnValue = *n1 + *n2;
 
-	return test;
+	return returnValue;
 }
 
 long double *min(long double *n1, long double *n2)
 {
-	long double *test = malloc(sizeof(long double));
-
-	*test = *n1 < *n2 ? *n1 : *n2;
-	return test;
+	return *n1<*n2?n1:n2;
 }
 
 long double *multiplyByTwo(long double *number)
 {
-	long double *test = malloc(sizeof(long double));
-	*test = (*number) * 2;
+	long double *returnValue = malloc(sizeof(long double));
+	*returnValue = (*number) * 2;
 
-	return test;
+	return returnValue;
 }
 
-char *shiftChars(char *chara)
+char *shiftChars(char *chars)
 {
-	char *test = malloc(sizeof(char) * 8);
+	char *returnValue = malloc(sizeof(char) * 8);
 
 	for (int i = 0; i < 7; i++)
 	{
-		test[i] = chara[i] + 1;
+		returnValue[i] = chars[i] + 1;
 	}
-	test[7] = '\0';
+	returnValue[7] = '\0';
 
-	return test;
+	return returnValue;
+}
+
+char *sortAlphabetically(char *chars1, char *chars2)
+{	
+	return (memcmp(chars1, chars2, TYPE_CHAR_LENGTH)<0)?chars1:chars2;
 }
 
 void printList(list *list)
@@ -221,7 +223,6 @@ void *testThreadFunction(struct argThreads *argv)
 		{
 			argv->ret = 0;
 		}
-		free(argv);
 		break;
 	case GETAT_THREADS:
 		n = getAt(argv->l, argv->index);
@@ -401,19 +402,18 @@ int main()
 	/*Insert with multithreding*/
 	list *l3 = createList(TYPE_LONGDOUBLE);
 	pthread_t threads[NUMBER_THREAD];
+	struct argThreads t[NUMBER_THREAD];
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
-		struct argThreads *t = malloc(sizeof(struct argThreads));
-		long double *val = malloc(sizeof(long double));
-		*val = (long double)i;
-		t->value = val;
-		t->l = l3;
-		t->functionID = INSERT_THREADS;
-		t->index = -1;
-		t->function = NULL;
-		t->compare_list = NULL;
-		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+		long double val = (long double)i;
+		t[i].value = &val;
+		t[i].l = l3;
+		t[i].functionID = INSERT_THREADS;
+		t[i].index = -1;
+		t[i].function = NULL;
+		t[i].compare_list = NULL;
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
 	}
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
@@ -429,7 +429,6 @@ int main()
 	/**/
 
 	/*multithreading GetAt*/
-	struct argThreads t[NUMBER_THREAD];
 
 	for (int i = 0; i < NUMBER_THREAD; i++)
 	{
@@ -441,7 +440,7 @@ int main()
 		t[i].ret = 1;
 		t[i].function = NULL;
 		t[i].compare_list = NULL;
-		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
 	}
 
 	Test[index] = 1;
@@ -470,7 +469,7 @@ int main()
 		t[i].ret = 0;
 		t[i].compare_list = DoubleList;
 		t[i].function = (void*)(void *) multiplyByTwo;
-		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
 	}
 
 	Test[index] = 1;
@@ -499,7 +498,7 @@ int main()
 		t[i].index = -1;
 		t[i].ret = 0;
 		t[i].function = (void*)(void *) sum;
-		pthread_create(threads + i, NULL, (void *)testThreadFunction, (void *)t);
+		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
 	}
 
 	Test[index] = 1;
