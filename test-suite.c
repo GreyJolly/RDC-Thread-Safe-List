@@ -673,13 +673,8 @@ int main()
 
 	printf("\tTest %d:\t%d/1\t\tTesting reduce in multithreading\n", ++index, Test[index]);
 
-<<<<<<< HEAD
-	deleteList(list_char);	 // Move if necessary
-	deleteList(list_char_2); // Doing some leak testing
-=======
-	deleteList(list_char);		// Move if necessary
-	deleteList(list_char_2);	// Doing some leak testing
->>>>>>> a19a05d102ea5d27878b2449de3c5f79c13fef82
+	deleteList(list_char);
+	deleteList(list_char_2);	
 	deleteList(l1);
 	deleteList(l2);
 	deleteList(l3);
