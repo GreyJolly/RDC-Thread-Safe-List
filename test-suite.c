@@ -391,6 +391,20 @@ int main()
 	Test[index] = errno == EINVAL && list_char_2 == NULL;
 	printf("\tTest %2d:\t%d/1\t\tError in map, function invalid\n", ++index, Test[index]);
 
+	/*Map
+	list *List_char_3 = createList(TYPE_LONGDOUBLE);
+	for (int i = 0; i < 10; i++)
+	{
+		test_longDouble = shiftChars(insertChar(list_char, 0, NUMBER_ELEMENTS, 'a'));
+		baseNode *node = insert(List_char_3, &test_longDouble);
+	}
+
+	list_char_2 = map(list_char, (void *)(void *)multiplyByTwo);
+	if (list_char_2 == NULL && errno == EINVAL)
+		Test[index] = 0;
+	Test[index] = checkSameElements(l2, DoubleList);
+	printf("\tTest %d:\t%d/1\t\tMap in single thread\n", ++index, Test[index]);
+	*/
 
 	printf("\nTesting lists with long double\n");
 
