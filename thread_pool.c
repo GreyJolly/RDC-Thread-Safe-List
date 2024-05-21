@@ -133,6 +133,7 @@ void deleteThreadPool(threadPool *pool)
 	for (int i = 0; i < THREAD_POOL_SIZE; i++)
 	{
 		pthread_cancel(pool->threads[i]);
+		pthread_join(pool->threads[i], NULL);
 	}
 	ret = sem_destroy(&(pool->numberOfJobs));
 	if (ret)
@@ -146,6 +147,8 @@ void deleteThreadPool(threadPool *pool)
 	ret = sem_destroy(&(pool->accessingResults));
 	if (ret)
 		handleError("sem_destroy");
+
+	free(pool);
 }
 
 unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args)

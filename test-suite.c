@@ -193,8 +193,9 @@ int countOccurences(list *l, baseNode *n)
 			iter = getAt(l, i);
 			if (iter == NULL)
 				break;
-			if (((ldoubleNode *)iter)->value == ((ldoubleNode *)n)->value);
-				occurences++;
+			if (((ldoubleNode *)iter)->value == ((ldoubleNode *)n)->value)
+				;
+			occurences++;
 		}
 		break;
 	}
@@ -227,7 +228,7 @@ int sameNumberOfElements(list *l1, list *l2)
 // Checks whehter two lists have the same elements, regardless of order
 int checkSameElements(list *l1, list *l2)
 {
-	if (l1->listType != l2->listType || sameNumberOfElements(l1,l2) != 1)
+	if (l1->listType != l2->listType || sameNumberOfElements(l1, l2) != 1)
 		return 0;
 	baseNode *n;
 	for (int i = 0; 1; i++)
@@ -281,7 +282,10 @@ void *testThreadFunction(struct argThreads *argv)
 			argv->ret = 0;
 		}
 		else
+		{
 			argv->ret = checkSameElements(res, argv->compare_list);
+			deleteList(res);
+		}
 		break;
 
 	case REMOVEFROMLIST_THREADS:
@@ -341,18 +345,22 @@ int main()
 	Test[index] = 1;
 	memcpy(test_char, "ciaone1a", TYPE_CHAR_LENGTH);
 	n = insertAt(list_char, 0, &test_char);
-	for(int i = 0; i<NUMBER_ELEMENTS+1; i++){
+	for (int i = 0; i < NUMBER_ELEMENTS + 1; i++)
+	{
 		n = getAt(list_char, i);
-		if(n==NULL) Test[index] = 0;
+		if (n == NULL)
+			Test[index] = 0;
 	}
 	printf("\tTest %2d:\t%d/1\t\tinsertAt of element\n", ++index, Test[index]);
 
 	/*TEST 7: removeAt of element*/
 	Test[index] = 1;
 	n = removeFromListAt(list_char, 0);
-	for(int i = 0; i<NUMBER_ELEMENTS; i++){
+	for (int i = 0; i < NUMBER_ELEMENTS; i++)
+	{
 		n = getAt(list_char, i);
-		if(n==NULL) Test[index] = 0;
+		if (n == NULL)
+			Test[index] = 0;
 	}
 	printf("\tTest %2d:\t%d/1\t\tremoveAt of element\n", ++index, Test[index]);
 
@@ -368,15 +376,18 @@ int main()
 	{
 		Test[index] = 0;
 	}
-	if(Test[index]!=0){
+	if (Test[index] != 0)
+	{
 		n = removeFromList(list_char);
 		if (errno == EINVAL && n == NULL)
 		{
 			Test[index] = 0;
 		}
-		for(int i = 0; i<NUMBER_ELEMENTS; i++){
+		for (int i = 0; i < NUMBER_ELEMENTS; i++)
+		{
 			n = getAt(list_char, i);
-			if(n==NULL) Test[index] = 0;
+			if (n == NULL)
+				Test[index] = 0;
 		}
 	}
 	printf("\tTest %2d:\t%d/1\t\tRemove of an element\n", ++index, Test[index]);
@@ -384,13 +395,14 @@ int main()
 	/* TEST 10: Error in map, list inavlid*/
 	list *list_char_2 = map(NULL, (void *)(void *)shiftChars);
 	Test[index] = errno == EINVAL && list_char_2 == NULL;
+	deleteList(list_char_2);
 	printf("\tTest %2d:\t%d/1\t\tError in map, list inavlid\n", ++index, Test[index]);
-	
+
 	/*TEST 11: Error in map, function invalid */
 	list_char_2 = map(list_char, NULL);
 	Test[index] = errno == EINVAL && list_char_2 == NULL;
+	deleteList(list_char_2);
 	printf("\tTest %2d:\t%d/1\t\tError in map, function invalid\n", ++index, Test[index]);
-
 
 	printf("\nTesting lists with long double\n");
 
@@ -472,11 +484,13 @@ int main()
 	/*Error in map, list inavlid*/
 	list *l2 = map(NULL, (void *)(void *)multiplyByTwo);
 	Test[index] = errno == EINVAL && l2 == NULL;
+	deleteList(l2);
 	printf("\tTest %2d:\t%d/1\t\tError in map, list inavlid\n", ++index, Test[index]);
 
 	/*Error in map, function invalid */
 	l2 = map(l1, NULL);
 	Test[index] = errno == EINVAL && l2 == NULL;
+	deleteList(l2);
 	printf("\tTest %2d:\t%d/1\t\tError in map, function invalid\n", ++index, Test[index]);
 
 	/*Map*/
@@ -660,8 +674,8 @@ int main()
 
 	printf("\tTest %d:\t%d/1\t\tTesting reduce in multithreading\n", ++index, Test[index]);
 
-		deleteList(list_char);		// Move if necessary
-	deleteList(list_char_2);	// Doing some leak testing
+	deleteList(list_char);	 // Move if necessary
+	deleteList(list_char_2); // Doing some leak testing
 	deleteList(l1);
 	deleteList(l2);
 	deleteList(l3);
