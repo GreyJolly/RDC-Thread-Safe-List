@@ -27,11 +27,12 @@ typedef struct threadPool
 	int lastGeneratedJob;
 	sem_t numberOfJobs;
 	sem_t accessingJobs;
+	sem_t numberOfResults;
 	sem_t accessingResults;
 	pthread_t threads[THREAD_POOL_SIZE];
 } threadPool;
 
 threadPool *createThreadPool();
-void deleteThreadPool(threadPool * pool);
+void deleteThreadPool(threadPool *pool);
 unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args);
 void *getResult(threadPool *pool, unsigned int resultID);
