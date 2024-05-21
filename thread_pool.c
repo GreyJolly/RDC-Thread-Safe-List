@@ -54,6 +54,10 @@ void *threadFunction(void *arg)
 			result->next = pool->firstResult;
 			pool->firstResult = result;
 
+			ret = sem_post(&(pool->numberOfResults));
+			if (ret)
+				handleError("sem_wait");
+
 			ret = sem_post(&(pool->accessingResults));
 			if (ret)
 				handleError("sem_wait");
@@ -82,6 +86,9 @@ threadPool *createThreadPool()
 		handleError("sem_init");
 
 	ret = sem_init(&(pool->accessingJobs), 0, 1);
+	if (ret)
+		handleError("sem_init");
+	ret = sem_init(&(pool->numberOfResults), 0, 0);
 	if (ret)
 		handleError("sem_init");
 	ret = sem_init(&(pool->accessingResults), 0, 1);
@@ -126,14 +133,16 @@ void deleteThreadPool(threadPool *pool)
 	{
 		pthread_cancel(pool->threads[i]);
 	}
-
+	ret = sem_destroy(&(pool->numberOfJobs));
+	if (ret)
+		handleError("sem_destroy");
 	ret = sem_destroy(&(pool->accessingJobs));
 	if (ret)
 		handleError("sem_destroy");
-	ret = sem_destroy(&(pool->accessingResults));
+	ret = sem_destroy(&(pool->numberOfResults));
 	if (ret)
 		handleError("sem_destroy");
-	ret = sem_destroy(&(pool->numberOfJobs));
+	ret = sem_destroy(&(pool->accessingResults));
 	if (ret)
 		handleError("sem_destroy");
 }
@@ -179,11 +188,14 @@ unsigned int addJob(threadPool *pool, void *(*function)(void *), void *args)
 void *getResult(threadPool *pool, unsigned int resultID)
 {
 	void *result = NULL;
+	int resultHasBeenFound = 0;
 
-	while (result == NULL)
+	while (!resultHasBeenFound)
 	{
-
-		int ret = sem_wait(&(pool->accessingResults));
+		int ret = sem_wait(&(pool->numberOfResults));
+		if (ret)
+			handleError("sem_wait");
+		ret = sem_wait(&(pool->accessingResults));
 		if (ret)
 			handleError("sem_wait");
 
@@ -196,8 +208,8 @@ void *getResult(threadPool *pool, unsigned int resultID)
 				pool->firstResult = pool->firstResult->next;
 				result = jobResult->result;
 				free(jobResult);
+				resultHasBeenFound = 1;
 			}
-
 			else
 			{
 				while (jobResult != NULL && jobResult->next != NULL)
@@ -209,10 +221,18 @@ void *getResult(threadPool *pool, unsigned int resultID)
 
 						jobResult->next = foundResult->next;
 						free(foundResult);
+						resultHasBeenFound = 1;
+						break;
 					}
 					jobResult = jobResult->next;
 				}
 			}
+		}
+		if (!resultHasBeenFound)
+		{
+			ret = sem_post(&(pool->numberOfResults));
+			if (ret)
+				handleError("sem_wait");
 		}
 
 		ret = sem_post(&(pool->accessingResults));
