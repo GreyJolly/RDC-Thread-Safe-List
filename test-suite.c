@@ -54,7 +54,7 @@ long double *multiplyByTwo(long double *number)
 
 char *shiftChars(char *chars)
 {
-	char *returnValue = malloc(sizeof(char) * 8);
+	char *returnValue;
 
 	for (int i = 0; i < 7; i++)
 	{
@@ -643,6 +643,7 @@ int main()
 		t[i].ret = 0;
 		t[i].function = (void *)(void *)sum;
 		pthread_create(threads + i, NULL, (void *)testThreadFunction, &t[i]);
+		pthread_detach(threads[i]);
 	}
 
 	Test[index] = 1;
@@ -659,9 +660,12 @@ int main()
 
 	printf("\tTest %d:\t%d/1\t\tTesting reduce in multithreading\n", ++index, Test[index]);
 
+		deleteList(list_char);		// Move if necessary
+	deleteList(list_char_2);	// Doing some leak testing
 	deleteList(l1);
-	deleteList(base_list);
+	deleteList(l2);
 	deleteList(l3);
+	deleteList(base_list);
 
 	clock_t end = clock(); // End timer
 

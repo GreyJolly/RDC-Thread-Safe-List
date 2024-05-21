@@ -216,6 +216,8 @@ baseNode *insertAt(list *l, unsigned int index, void *value)
 			ret = sem_post(&(l->accessing));
 			if (ret)
 				handleError("sem_post", 1);
+
+			free(newNode);
 			return NULL; // returns NULL if the list is too short
 		}
 
@@ -262,7 +264,7 @@ baseNode *removeFromList(list *l)
 		handleError("sem_wait", 1);
 
 	if (l == NULL)
-		handleError("insertAt: invalid List", 0);
+		handleError("removeFrom: invalid List", 0);
 	if (l->head == NULL)
 	{
 		ret = sem_post(&(l->accessing));
@@ -312,7 +314,7 @@ baseNode *removeFromListAt(list *l, unsigned int index)
 		handleError("sem_wait", 1);
 
 	if (l == NULL)
-		handleError("insertAt: invalid List", 0);
+		handleError("removeFromListAt: invalid List", 0);
 	if (l->head == NULL)
 	{
 		ret = sem_post(&(l->accessing));
@@ -374,7 +376,7 @@ list *map(list *l, void *(*function)(void *))
 		handleError("sem_wait", 1);
 
 	if (l == NULL)
-		handleError("insertAt: invalid List", 0);
+		handleError("map: invalid List", 0);
 
 	list *newList = createList(l->listType);
 	baseNode *currentNode = l->head;
@@ -524,6 +526,8 @@ void *reduce(list *l, void *(*function)(void *, void *))
 		}
 	}
 	void *result = (head->solved) ? head->value : getResult(l->pool, head->ticket);
+
+	free(head);
 
 	ret = sem_post(&(l->accessing));
 	if (ret)

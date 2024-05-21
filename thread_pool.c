@@ -27,7 +27,7 @@ void *threadFunction(void *arg)
 		if (pool->firstJob != NULL)
 		{
 
-			threadPoolJob *currentJob = malloc(sizeof(threadPoolJob));
+			threadPoolJob *currentJob = malloc(sizeof(threadPoolJob)), *freeableJob = pool->firstJob;
 			memcpy(currentJob, pool->firstJob, sizeof(threadPoolJob));
 
 			if (pool->firstJob->next == NULL)
@@ -35,6 +35,7 @@ void *threadFunction(void *arg)
 				pool->lastJob = NULL;
 
 			pool->firstJob = pool->firstJob->next;
+			free (freeableJob);
 
 			ret = sem_post(&(pool->accessingJobs));
 			if (ret)
